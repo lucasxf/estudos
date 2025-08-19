@@ -1,6 +1,6 @@
-package exercicio_e.domain;
+package exercicio_e.subscriptions_billing.domain;
 
-import exercicio_e.domain.subscription.Subscription;
+import exercicio_e.subscriptions_billing.domain.subscription.Subscription;
 
 import java.util.UUID;
 
@@ -13,4 +13,5 @@ public class Customer {
     private UUID id;
     private String name;
     private Subscription subscription;
+
 }

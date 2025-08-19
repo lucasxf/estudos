@@ -1,4 +1,4 @@
-package exercicio_e.domain.event;
+package exercicio_e.subscriptions_billing.domain.event;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

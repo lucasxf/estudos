@@ -1,4 +1,4 @@
-package exercicio_e.domain.plan;
+package exercicio_e.subscriptions_billing.domain.plan;
 
 /**
  * @author Lucas Xavier Ferreira

@@ -1,5 +1,9 @@
-package exercicio_e.domain.event;
+package exercicio_e.subscriptions_billing.domain.event;
 
+/**
+ * @author Lucas Xavier Ferreira
+ * @date 18/08/2025
+ */
 public enum EventType {
 
     TRIAL_STARTED,

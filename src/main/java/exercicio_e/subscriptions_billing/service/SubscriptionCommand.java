@@ -1,8 +1,12 @@
-package exercicio_e.service;
+package exercicio_e.subscriptions_billing.service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * @author Lucas Xavier Ferreira
+ * @date 19/08/2025
+ */
 public sealed interface SubscriptionCommand {
 
     UUID id();

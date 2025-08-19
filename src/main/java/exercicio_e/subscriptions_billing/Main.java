@@ -1,4 +1,4 @@
-package exercicio_e;
+package exercicio_e.subscriptions_billing;
 
 /**
  * @author Lucas Xavier Ferreira
