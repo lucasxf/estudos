@@ -1,6 +1,6 @@
 package exercicio_e.repository;
 
-import exercicio_e.domain.event.Event;
+import exercicio_e.domain.event.SubscriptionEvent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +13,6 @@ import java.util.UUID;
  */
 public class EventStore {
 
-    private Map<UUID, List<Event>> store = new HashMap<>();
+    private Map<UUID, List<SubscriptionEvent>> store = new HashMap<>();
 
 }
