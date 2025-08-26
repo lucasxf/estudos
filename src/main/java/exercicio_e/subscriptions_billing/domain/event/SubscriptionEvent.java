@@ -14,6 +14,11 @@ public sealed interface SubscriptionEvent permits
         PlanUpgradedEvent,
         PlanDowngradedEvent {
 
+    /**
+     * Event ID.
+     *
+     * @return this event ID.
+     */
     UUID id();
 
     Instant timestamp();
