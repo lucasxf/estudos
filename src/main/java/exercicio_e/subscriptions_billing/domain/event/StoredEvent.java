@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
+ * An envelope for Subscription events.
+ *
  * @author Lucas Xavier Ferreira
  * @date 25/08/2025
  */
@@ -12,7 +14,6 @@ public record StoredEvent(
         UUID aggregateId,
         long version,
         Instant timestamp,
-        EventType type,
         UUID correlationId,
         SubscriptionEvent payload) {
 }

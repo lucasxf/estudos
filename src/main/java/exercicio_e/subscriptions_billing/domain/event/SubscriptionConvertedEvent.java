@@ -1,16 +1,16 @@
 package exercicio_e.subscriptions_billing.domain.event;
 
-import java.time.LocalDateTime;
+import exercicio_e.subscriptions_billing.domain.plan.Plan;
+
+import java.time.Instant;
 import java.util.UUID;
 
 /**
  * @author Lucas Xavier Ferreira
  * @date 18/08/2025
  */
-public record SubscriptionConvertedEvent(UUID id, LocalDateTime dateTime, EventType type) implements SubscriptionEvent {
-
-    public SubscriptionConvertedEvent(UUID id, LocalDateTime dateTime) {
-        this(id, dateTime, EventType.SUBSCRIPTION_CONVERTED);
-    }
-
+public record SubscriptionConvertedEvent(
+        UUID id,
+        Instant timestamp,
+        Plan newPlan) implements SubscriptionEvent {
 }

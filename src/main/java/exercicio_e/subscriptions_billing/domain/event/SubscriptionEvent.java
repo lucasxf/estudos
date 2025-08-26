@@ -7,12 +7,15 @@ import java.util.UUID;
  * @author Lucas Xavier Ferreira
  * @date 18/08/2025
  */
-public interface SubscriptionEvent {
+public sealed interface SubscriptionEvent permits
+        TrialStartedEvent,
+        SubscriptionConvertedEvent,
+        SubscriptionCanceledEvent,
+        PlanUpgradedEvent,
+        PlanDowngradedEvent {
 
     UUID id();
 
     Instant timestamp();
-
-    EventType type();
 
 }
