@@ -1,7 +1,5 @@
 package exercicio_e.subscriptions_billing.domain;
 
-import exercicio_e.subscriptions_billing.domain.subscription.Subscription;
-
 import java.util.UUID;
 
 /**

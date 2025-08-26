@@ -1,6 +1,6 @@
 package exercicio_e.subscriptions_billing.domain.event;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -11,7 +11,7 @@ public interface SubscriptionEvent {
 
     UUID id();
 
-    LocalDateTime dateTime();
+    Instant timestamp();
 
     EventType type();
 
