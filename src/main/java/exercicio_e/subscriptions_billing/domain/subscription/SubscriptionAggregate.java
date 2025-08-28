@@ -41,6 +41,10 @@ public class SubscriptionAggregate {
         replay(eventStream);
     }
 
+    /**
+     * @param cmd
+     * @return
+     */
     public TrialStartedEvent decide(StartTrialCommand cmd) {
         preValidateCommand(cmd);
         if (state != null) {
@@ -55,6 +59,10 @@ public class SubscriptionAggregate {
                 cmd.id(), start, trialEnd, cmd.preferredPlan());
     }
 
+    /**
+     * @param cmd
+     * @return
+     */
     public SubscriptionConvertedEvent decide(ConvertSubscriptionCommand cmd) {
         preValidateCommand(cmd);
         if (SubscriptionState.TRIAL != state) {
@@ -65,26 +73,38 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Cannot convert to invalid plan");
         }
         return new SubscriptionConvertedEvent(
-                cmd.id(), cmd.timestamp(), cmd.plan());
+                cmd.id(), cmd.timestamp(), currentPlan, cmd.plan());
     }
 
+    /**
+     * @param cmd
+     * @return
+     */
     public SubscriptionEvent decide(ChangePlanCommand cmd) {
         preValidateCommand(cmd);
-        return null;
-        /*if (currentPlan.equals(cmd.newPlan())) {
+        Plan newPlan = cmd.newPlan();
+        if (newPlan == null) {
+            throw new RuntimeException("Invalid plan");
+        }
+        if (newPlan.getCode() > currentPlan.getCode()) {
+            return new PlanUpgradedEvent(cmd.id(), cmd.timestamp(), currentPlan, cmd.newPlan());
+        } else if (newPlan.getCode() < currentPlan.getCode()) {
+            return new PlanDowngradedEvent(cmd.id(), cmd.timestamp(), currentPlan, cmd.newPlan());
+        } else {
             throw new RuntimeException("Can't change to the same plan");
         }
-        Plan newPlan = cmd.newPlan();
-        if (Plans.BASIC == currentPlan) {
-            return new PlanUpgradedEvent(cmd.id(), cmd.timestamp(), cmd.newPlan());
-        } else if (Plans.PREMIUM == currentPlan) {
-            return new PlanDowngradedEvent(cmd.id(), cmd.timestamp(), cmd.newPlan());
-        } else {
-            if (newPlan == Plans.BASIC) {
-                return new PlanUpgradedEvent(cmd.id(), cmd.timestamp(), cmd.newPlan());
-            }
-            return new PlanDowngradedEvent(cmd.id(), cmd.timestamp(), cmd.newPlan());
-        }*/
+    }
+
+    /**
+     * 
+     * @param cmd
+     * @return
+     */
+    public SubscriptionEvent decide(CancelSubscriptionCommand cmd) {
+        if (state == SubscriptionState.CANCELED) {
+            throw new RuntimeException("Subscription is already canceled.");
+        }
+        return new SubscriptionCanceledEvent(cmd.id(), cmd.timestamp(), currentPlan);
     }
 
     private void preValidateCommand(SubscriptionCommand cmd) {
@@ -145,7 +165,6 @@ public class SubscriptionAggregate {
     private void apply() {
         this.version++;
         this.state = SubscriptionState.CANCELED;
-        this.currentPlan = null;
     }
 
     private void apply(SubscriptionConvertedEvent e) {

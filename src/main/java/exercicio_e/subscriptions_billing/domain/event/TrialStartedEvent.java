@@ -14,4 +14,10 @@ public record TrialStartedEvent(
         Instant timestamp,
         Instant end,
         Plan preferredPlan) implements SubscriptionEvent {
+
+    @Override
+    public Plan plan() {
+        return preferredPlan;
+    }
+
 }

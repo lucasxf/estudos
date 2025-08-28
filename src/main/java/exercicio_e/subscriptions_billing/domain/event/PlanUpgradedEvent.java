@@ -12,5 +12,12 @@ import java.util.UUID;
 public record PlanUpgradedEvent(
         UUID id,
         Instant timestamp,
+        Plan oldPlan,
         Plan newPlan) implements SubscriptionEvent {
+
+    @Override
+    public Plan plan() {
+        return newPlan;
+    }
+
 }

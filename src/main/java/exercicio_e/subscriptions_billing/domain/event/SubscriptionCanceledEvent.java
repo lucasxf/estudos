@@ -1,5 +1,7 @@
 package exercicio_e.subscriptions_billing.domain.event;
 
+import exercicio_e.subscriptions_billing.domain.plan.Plan;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,5 +11,12 @@ import java.util.UUID;
  */
 public record SubscriptionCanceledEvent(
         UUID id,
-        Instant timestamp) implements SubscriptionEvent {
+        Instant timestamp,
+        Plan canceledPlan) implements SubscriptionEvent {
+
+    @Override
+    public Plan plan() {
+        return canceledPlan;
+    }
+
 }

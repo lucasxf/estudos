@@ -1,5 +1,7 @@
 package exercicio_e.subscriptions_billing.domain.event;
 
+import exercicio_e.subscriptions_billing.domain.plan.Plan;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -22,5 +24,7 @@ public sealed interface SubscriptionEvent permits
     UUID id();
 
     Instant timestamp();
+
+    Plan plan();
 
 }
