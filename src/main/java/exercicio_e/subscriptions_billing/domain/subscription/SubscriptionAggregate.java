@@ -2,8 +2,8 @@ package exercicio_e.subscriptions_billing.domain.subscription;
 
 import exercicio_e.subscriptions_billing.domain.event.*;
 import exercicio_e.subscriptions_billing.domain.plan.Plan;
-import exercicio_e.subscriptions_billing.service.SubscriptionCommand;
-import exercicio_e.subscriptions_billing.service.SubscriptionCommand.*;
+import exercicio_e.subscriptions_billing.application.SubscriptionCommand;
+import exercicio_e.subscriptions_billing.application.SubscriptionCommand.*;
 
 import java.time.Instant;
 import java.time.Period;
@@ -82,6 +82,9 @@ public class SubscriptionAggregate {
      */
     public SubscriptionEvent decide(ChangePlanCommand cmd) {
         preValidateCommand(cmd);
+        if (state == SubscriptionState.CANCELED) {
+            throw new RuntimeException("Cannot change plans on a canceled subscription");
+        }
         Plan newPlan = cmd.newPlan();
         if (newPlan == null) {
             throw new RuntimeException("Invalid plan");
@@ -96,7 +99,7 @@ public class SubscriptionAggregate {
     }
 
     /**
-     * 
+     *
      * @param cmd
      * @return
      */

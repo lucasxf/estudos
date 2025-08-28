@@ -1,4 +1,4 @@
-package exercicio_e.subscriptions_billing.service;
+package exercicio_e.subscriptions_billing.application;
 
 import exercicio_e.subscriptions_billing.domain.plan.Plan;
 

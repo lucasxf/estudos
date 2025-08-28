@@ -1,4 +1,4 @@
-package exercicio_e.subscriptions_billing.service;
+package exercicio_e.subscriptions_billing.application;
 
 import exercicio_e.subscriptions_billing.domain.Account;
 import exercicio_e.subscriptions_billing.domain.event.SubscriptionEvent;
@@ -19,7 +19,9 @@ public interface SubscriptionCommandHandler {
     default List<SubscriptionEvent> handleCommand(UUID accountId, SubscriptionCommand command) {
         switch (command) {
             case SubscriptionCommand.StartTrialCommand cmd -> handleStartTrialCommand(accountId, cmd);
+            case SubscriptionCommand.ConvertSubscriptionCommand cmd -> handleConvertSubscriptionCommand(accountId, cmd);
             case SubscriptionCommand.ChangePlanCommand cmd -> handleUpgradePlanCommand(accountId, cmd);
+            case SubscriptionCommand.CancelSubscriptionCommand cmd -> handleCancelSubscriptionCommand(accountId, cmd);
             default -> throw new IllegalStateException("Unexpected value: " + command);
         }
         return null;
