@@ -14,12 +14,14 @@ import java.util.UUID;
  */
 public interface SubscriptionWriteRepository {
 
-    List<SubscriptionEvent> appendEvent(SubscriptionEvent event);
+
+    List<SubscriptionEvent> appendEvent(UUID subscriptionId, SubscriptionEvent event);
 
     default List<SubscriptionEvent> getEventsByAccount(Account account) {
         return getEventsByAccountId(account.getId());
     }
 
     List<SubscriptionEvent> getEventsByAccountId(UUID id);
+
 
 }

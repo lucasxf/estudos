@@ -1,6 +1,7 @@
 package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
 
 import exercicio_e.subscriptions_billing.domain.Account;
+import exercicio_e.subscriptions_billing.domain.event.StoredEvent;
 import exercicio_e.subscriptions_billing.domain.event.SubscriptionEvent;
 import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionWriteRepository;
 
@@ -12,8 +13,11 @@ import java.util.UUID;
  * @date 28/08/2025
  */
 public class SubscriptionWriteRepositoryImpl implements SubscriptionWriteRepository {
+
+
     @Override
-    public List<SubscriptionEvent> appendEvent(SubscriptionEvent event) {
+    public List<SubscriptionEvent> appendEvent(UUID subscriptionId, SubscriptionEvent event) {
+        final StoredEvent storedEvent = toStoredEvent(subscriptionId, event);
         return List.of();
     }
 
@@ -26,4 +30,15 @@ public class SubscriptionWriteRepositoryImpl implements SubscriptionWriteReposit
     public List<SubscriptionEvent> getEventsByAccountId(UUID id) {
         return List.of();
     }
+
+    private StoredEvent toStoredEvent(UUID subscriptionId, SubscriptionEvent event) {
+        return new StoredEvent(
+                event.id(),
+                subscriptionId,
+                123L,
+                event.timestamp(),
+                UUID.randomUUID(),
+                event);
+    }
+
 }
