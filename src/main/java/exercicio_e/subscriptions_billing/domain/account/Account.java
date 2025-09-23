@@ -1,5 +1,6 @@
-package exercicio_e.subscriptions_billing.domain;
+package exercicio_e.subscriptions_billing.domain.account;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -9,6 +10,10 @@ import java.util.UUID;
 public class Account {
 
     private UUID id;
+
+    private String username;
+
+    private Instant createdAt;
 
     public UUID getId() {
         return id;

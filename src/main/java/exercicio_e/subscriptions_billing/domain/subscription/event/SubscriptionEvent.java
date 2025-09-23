@@ -1,6 +1,6 @@
-package exercicio_e.subscriptions_billing.domain.event;
+package exercicio_e.subscriptions_billing.domain.subscription.event;
 
-import exercicio_e.subscriptions_billing.domain.plan.Plan;
+import exercicio_e.subscriptions_billing.domain.subscription.plan.Plan;
 
 import java.time.Instant;
 import java.util.UUID;

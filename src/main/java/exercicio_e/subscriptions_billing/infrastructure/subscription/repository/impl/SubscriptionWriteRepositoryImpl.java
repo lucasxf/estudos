@@ -1,9 +1,9 @@
-package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
+package exercicio_e.subscriptions_billing.infrastructure.subscription.repository.impl;
 
-import exercicio_e.subscriptions_billing.domain.Account;
-import exercicio_e.subscriptions_billing.domain.event.StoredEvent;
-import exercicio_e.subscriptions_billing.domain.event.SubscriptionEvent;
-import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionWriteRepository;
+import exercicio_e.subscriptions_billing.domain.account.Account;
+import exercicio_e.subscriptions_billing.infrastructure.subscription.event_store.StoredEvent;
+import exercicio_e.subscriptions_billing.domain.subscription.event.SubscriptionEvent;
+import exercicio_e.subscriptions_billing.infrastructure.subscription.repository.SubscriptionWriteRepository;
 
 import java.util.List;
 import java.util.UUID;

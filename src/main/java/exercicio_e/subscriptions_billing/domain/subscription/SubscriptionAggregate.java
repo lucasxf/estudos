@@ -1,9 +1,9 @@
 package exercicio_e.subscriptions_billing.domain.subscription;
 
-import exercicio_e.subscriptions_billing.domain.event.*;
-import exercicio_e.subscriptions_billing.domain.plan.Plan;
-import exercicio_e.subscriptions_billing.application.SubscriptionCommand;
-import exercicio_e.subscriptions_billing.application.SubscriptionCommand.*;
+import exercicio_e.subscriptions_billing.domain.subscription.event.*;
+import exercicio_e.subscriptions_billing.domain.subscription.plan.Plan;
+import exercicio_e.subscriptions_billing.domain.subscription.command.SubscriptionCommand;
+import exercicio_e.subscriptions_billing.domain.subscription.command.SubscriptionCommand.*;
 
 import java.time.Instant;
 import java.time.Period;

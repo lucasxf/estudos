@@ -1,4 +1,4 @@
-package exercicio_e.subscriptions_billing.infrastructure.repository;
+package exercicio_e.subscriptions_billing.infrastructure.subscription.repository;
 
 /**
  *

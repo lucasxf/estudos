@@ -1,9 +1,12 @@
-package exercicio_e.subscriptions_billing.domain.plan;
+package exercicio_e.subscriptions_billing.domain.subscription.plan;
+
+import lombok.Getter;
 
 /**
  * @author Lucas Xavier Ferreira
  * @date 18/08/2025
  */
+@Getter
 public enum Plan {
 
     BASIC(100),
@@ -14,10 +17,6 @@ public enum Plan {
 
     Plan(int code) {
         this.code = code;
-    }
-
-    public int getCode() {
-        return code;
     }
 
 }
