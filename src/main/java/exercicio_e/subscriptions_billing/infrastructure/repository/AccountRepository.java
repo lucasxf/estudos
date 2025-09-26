@@ -11,6 +11,18 @@ import java.util.UUID;
  */
 public interface AccountRepository {
 
-    List<AccountEvent> getEventsById(UUID id);
+    String AGGREGATE_TYPE = "Account";
+
+    default LoadedStream load(UUID aggregateId) {
+        return load(AGGREGATE_TYPE, aggregateId);
+    }
+
+    LoadedStream load(String aggregateType, UUID aggregateId);
+
+    List<AccountEvent> append(UUID aggregateId, long expectedVersion, AccountEvent newEvent);
+
+    List<AccountEvent> append(UUID aggregateId, long expectedVersion, List<AccountEvent> newEvents);
+
+    record LoadedStream(UUID aggregateId, List<AccountEvent> history, long lastVersion) { }
 
 }

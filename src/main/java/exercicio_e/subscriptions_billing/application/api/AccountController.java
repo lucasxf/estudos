@@ -21,6 +21,8 @@ import java.util.UUID;
 @RequestMapping("/accounts")
 public class AccountController {
 
+    private static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
     private final AccountCommandHandler commandHandler;
 
     public AccountController(AccountCommandHandler commandHandler) {
@@ -31,21 +33,29 @@ public class AccountController {
             @RequestBody CreateAccountRequest request,
             @RequestHeader(value = "X-Correlation-Id", required = false) String corr) {
         var correlationId = parseCorrelationId(corr);
-        var commandId = UUID.randomUUID();
-        var command = createAccountCommand(commandId, request);
+        var command = createAccountCommand(request);
         commandHandler.handle(correlationId, command);
         return ResponseEntity.accepted().build();
-    }
-
-    private CreateAccountCommand createAccountCommand(UUID commandId, CreateAccountRequest request) {
-        return new CreateAccountCommand(commandId, Instant.now(), request.getUsername());
-
     }
 
     private UUID parseCorrelationId(String corr) {
         return corr != null && !corr.isBlank() ?
                 UUID.fromString(corr) :
                 UUID.randomUUID();
+    }
+
+    private CreateAccountCommand createAccountCommand(CreateAccountRequest request) {
+        return new CreateAccountCommand(UUID.randomUUID(), Instant.now(), request.getUsername());
+    }
+
+    private String usernameKey(String username) {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (!username.matches(EMAIL_PATTERN)) {
+            throw new IllegalArgumentException("Username deve ser um e-mail válido");
+        }
+        return username.toLowerCase();
     }
 
 }
