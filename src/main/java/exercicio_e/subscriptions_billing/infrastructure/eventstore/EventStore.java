@@ -14,8 +14,8 @@ public class EventStore {
     private static final Map<String, List<StoredEvent>> eventsById = new HashMap<>();
 
     public List<StoredEvent> append(
-            String aggregateType, UUID id, StoredEvent event) {
-        var key = storeKey(aggregateType, id);
+            String aggregateType, String aggregateId, StoredEvent event) {
+        var key = storeKey(aggregateType, aggregateId);
         final var events = eventsById.getOrDefault(key, new ArrayList<>());
         events.add(event);
         eventsById.putIfAbsent(key, events);
@@ -23,7 +23,7 @@ public class EventStore {
     }
 
     public List<StoredEvent> readStream(
-            String aggregateType, UUID aggregateId) {
+            String aggregateType, String aggregateId) {
         var key = storeKey(aggregateType, aggregateId);
         return eventsById.getOrDefault(key, new ArrayList<>());
     }
@@ -33,8 +33,8 @@ public class EventStore {
         return -1L;
     }
 
-    private String storeKey(String aggregateType, UUID id) {
-        return aggregateType + ":" + id.toString();
+    private String storeKey(String aggregateType, String aggregateId) {
+        return aggregateType + ":" + aggregateId;
     }
 
 }

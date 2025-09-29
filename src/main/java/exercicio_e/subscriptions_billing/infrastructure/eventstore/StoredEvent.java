@@ -10,10 +10,19 @@ import java.util.UUID;
  * @date 25/08/2025
  */
 public record StoredEvent(
-        UUID eventId,
-        UUID aggregateId,
+        UUID id,
+        /**
+         * The type of the event, e.g., "AccountCreated", "UsernameReserved".
+         */
+        String type,
+        /**
+         * The aggregate type, e.g., "Account", "Username".
+         */
+        String aggregateType,
+        String aggregateId,
         long version,
-        Instant timestamp,
+        Instant occurredAt,
         UUID correlationId,
-        String payload) {
+        UUID causationId,
+        String payloadJson) {
 }

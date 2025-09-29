@@ -30,7 +30,7 @@ public class AccountRepositoryImpl implements AccountRepository {
     @Override
     public LoadedStream load(String aggregateType, UUID aggregateId) {
         try {
-            final List<StoredEvent> storedEvents = eventStore.readStream(aggregateType, aggregateId);
+            final List<StoredEvent> storedEvents = eventStore.readStream(aggregateType, aggregateId.toString());
             final var history = storedEvents.stream()
                     .map(this::toAccountEvent)
                     .toList();
@@ -41,13 +41,23 @@ public class AccountRepositoryImpl implements AccountRepository {
         }
     }
 
+    @Override
+    public List<AccountEvent> append(UUID aggregateId, long expectedVersion, AccountEvent newEvent) {
+        return List.of();
+    }
+
+    @Override
+    public List<AccountEvent> append(UUID aggregateId, long expectedVersion, List<AccountEvent> newEvents) {
+        return List.of();
+    }
+
     private long getVersion(List<StoredEvent> storedEvents) {
         return storedEvents.isEmpty() ? -1L : storedEvents.getLast().version();
     }
 
     private AccountEvent toAccountEvent(StoredEvent e) {
         try {
-            return mapper.readValue(e.payload(), AccountEvent.class);
+            return mapper.readValue(e.payloadJson(), AccountEvent.class);
         } catch (JsonProcessingException ex) {
             throw new RuntimeException(ex);
         }

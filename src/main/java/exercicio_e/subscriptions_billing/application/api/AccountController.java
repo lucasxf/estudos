@@ -1,14 +1,10 @@
 package exercicio_e.subscriptions_billing.application.api;
 
 import exercicio_e.subscriptions_billing.application.api.dto.AccountResponse;
-import exercicio_e.subscriptions_billing.application.api.dto.CreateAccountRequest;
 import exercicio_e.subscriptions_billing.application.commands.AccountCommandHandler;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -30,22 +26,24 @@ public class AccountController {
     }
 
     public ResponseEntity<AccountResponse> create(
-            @RequestBody CreateAccountRequest request,
+            @PathVariable String username,
+
             @RequestHeader(value = "X-Correlation-Id", required = false) String corr) {
-        var correlationId = parseCorrelationId(corr);
-        var command = createAccountCommand(request);
+        var correlationId = getCorrelationId(corr);
+        var usernameKey = usernameKey(username);
+        var command = createAccountCommand(usernameKey);
         commandHandler.handle(correlationId, command);
         return ResponseEntity.accepted().build();
     }
 
-    private UUID parseCorrelationId(String corr) {
+    private UUID getCorrelationId(String corr) {
         return corr != null && !corr.isBlank() ?
                 UUID.fromString(corr) :
                 UUID.randomUUID();
     }
 
-    private CreateAccountCommand createAccountCommand(CreateAccountRequest request) {
-        return new CreateAccountCommand(UUID.randomUUID(), Instant.now(), request.getUsername());
+    private CreateAccountCommand createAccountCommand(String usernameKey) {
+        return new CreateAccountCommand(UUID.randomUUID(), Instant.now(), usernameKey);
     }
 
     private String usernameKey(String username) {

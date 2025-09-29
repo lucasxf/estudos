@@ -15,8 +15,8 @@ public sealed interface AccountEvent {
 
     String username();
 
-    record AccountCreatedEvent(UUID id, Instant timestamp, String username) implements AccountEvent { }
+    record AccountCreated(UUID id, Instant timestamp, String username) implements AccountEvent { }
 
-    record AccountDeletedEvent(UUID id, Instant timestamp, String username) implements AccountEvent { }
+    record AccountDeleted(UUID id, Instant timestamp, String username) implements AccountEvent { }
 
 }

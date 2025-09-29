@@ -3,22 +3,25 @@ package exercicio_e.subscriptions_billing.infrastructure.repository;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent;
 
 import java.util.List;
-import java.util.UUID;
 
+/**
+ * @author Lucas Xavier Ferreira
+ * @date 23/09/2025
+ */
 public interface UsernameRepository {
 
     String AGGREGATE_TYPE = "Username";
 
-    default LoadedStream load(UUID aggregateId) {
-        return load(AGGREGATE_TYPE, aggregateId);
+    default LoadedStream load(String usernameKey) {
+        return load(AGGREGATE_TYPE, usernameKey);
     }
 
-    LoadedStream load(String aggregateType, UUID aggregateId);
+    LoadedStream load(String aggregateType, String usernameKey);
 
-    List<UsernameEvent> append(UUID aggregateId, long expectedVersion, UsernameEvent newEvent);
+    List<UsernameEvent> append(String usernameKey, long expectedVersion, UsernameEvent newEvent);
 
-    List<UsernameEvent> append(UUID aggregateId, long expectedVersion, List<UsernameEvent> newEvents);
+    List<UsernameEvent> append(String usernameKey, long expectedVersion, List<UsernameEvent> newEvents);
 
-    record LoadedStream(UUID aggregateId, List<UsernameEvent> history, long lastVersion) { }
+    record LoadedStream(String usernameKey, List<UsernameEvent> history, long lastVersion) { }
 
 }

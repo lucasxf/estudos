@@ -4,8 +4,8 @@ import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.DeleteAccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
-import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreatedEvent;
-import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountDeletedEvent;
+import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreated;
+import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountDeleted;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,15 +32,15 @@ public class AccountAggregate {
         replay();
     }
 
-    public AccountCreatedEvent decide(CreateAccountCommand command) {
+    public AccountCreated decide(CreateAccountCommand command) {
         validateCommand(command);
         if (state != AccountStatus.INACTIVE) {
             throw new IllegalStateException("Account already created or deleted");
         }
-        return new AccountCreatedEvent(command.id(), command.timestamp(), command.username());
+        return new AccountCreated(command.id(), command.timestamp(), command.username());
     }
 
-    public AccountDeletedEvent decide(DeleteAccountCommand command) {
+    public AccountDeleted decide(DeleteAccountCommand command) {
         validateCommand(command);
         if (state == AccountStatus.DELETED) {
             throw new IllegalStateException("Account already deleted");
@@ -48,15 +48,15 @@ public class AccountAggregate {
         if (command.username() == null || command.username().isBlank()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
         }
-        return new AccountDeletedEvent(command.id(), command.timestamp(), command.username());
+        return new AccountDeleted(command.id(), command.timestamp(), command.username());
     }
 
     private void replay() {
         for (AccountEvent event : eventStream) {
-            if (event instanceof AccountCreatedEvent) {
-                apply((AccountCreatedEvent) event);
-            } else if (event instanceof AccountDeletedEvent) {
-                apply((AccountDeletedEvent) event);
+            if (event instanceof AccountCreated) {
+                apply((AccountCreated) event);
+            } else if (event instanceof AccountDeleted) {
+                apply((AccountDeleted) event);
             }
             this.version++;
         }
@@ -74,11 +74,11 @@ public class AccountAggregate {
         }
     }
 
-    private void apply(AccountCreatedEvent event) {
+    private void apply(AccountCreated event) {
         this.state = AccountStatus.ACTIVE;
     }
 
-    private void apply(AccountDeletedEvent event) {
+    private void apply(AccountDeleted event) {
         this.state = AccountStatus.DELETED;
     }
 
