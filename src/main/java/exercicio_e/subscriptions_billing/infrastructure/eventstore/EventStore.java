@@ -13,6 +13,17 @@ public class EventStore {
 
     private static final Map<String, List<StoredEvent>> eventsById = new HashMap<>();
 
+    public List<StoredEvent> appendRaw(
+            String aggregateType,
+            String aggregateId,
+            List<StoredEvent> newEvents) {
+        var key = storeKey(aggregateType, aggregateId);
+        final var events = eventsById.getOrDefault(key, new ArrayList<>());
+        events.addAll(newEvents);
+        eventsById.putIfAbsent(key, events);
+        return events;
+    }
+
     public List<StoredEvent> append(
             String aggregateType, String aggregateId, StoredEvent event) {
         var key = storeKey(aggregateType, aggregateId);

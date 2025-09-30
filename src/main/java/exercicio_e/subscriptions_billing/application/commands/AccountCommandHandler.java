@@ -38,8 +38,8 @@ public class AccountCommandHandler {
     public List<AccountEvent> handleCreateAccountCommand(
             UUID correlationId, CreateAccountCommand command) {
         var user =
-        var stream = accountRepository.load(command.id());
-        var aggregate = new AccountAggregate(command.id(), stream.history());
+        var stream = accountRepository.load(command.accountId());
+        var aggregate = new AccountAggregate(command.accountId(), stream.history());
         var event = aggregate.decide(command);
         return null;
     }

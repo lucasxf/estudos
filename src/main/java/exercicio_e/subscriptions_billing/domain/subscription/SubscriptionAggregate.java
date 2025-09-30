@@ -7,9 +7,7 @@ import exercicio_e.subscriptions_billing.domain.subscription.command.Subscriptio
 
 import java.time.Instant;
 import java.time.Period;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -19,8 +17,6 @@ import java.util.UUID;
  * @date 19/08/2025
  */
 public class SubscriptionAggregate {
-
-    private static final Map<UUID, List<SubscriptionEvent>> cache = new HashMap<>();
 
     private final UUID id;
     private final List<SubscriptionEvent> eventStream;
@@ -50,13 +46,13 @@ public class SubscriptionAggregate {
         if (state != null) {
             throw new RuntimeException("Invalid subscription state: " + state);
         }
-        if (!id.equals(cmd.id())) {
-            throw new RuntimeException("Invalid subscription ID: " + cmd.id());
+        if (!id.equals(cmd.subscriptionId())) {
+            throw new RuntimeException("Invalid subscription ID: " + cmd.subscriptionId());
         }
         Instant start = cmd.timestamp();
         Instant trialEnd = calculateTrialEnd(start);
         return new TrialStartedEvent(
-                cmd.id(), start, trialEnd, cmd.preferredPlan());
+                cmd.subscriptionId(), start, trialEnd, cmd.preferredPlan());
     }
 
     /**
@@ -73,7 +69,7 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Cannot convert to invalid plan");
         }
         return new SubscriptionConvertedEvent(
-                cmd.id(), cmd.timestamp(), currentPlan, cmd.plan());
+                cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.plan());
     }
 
     /**
@@ -90,9 +86,9 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Invalid plan");
         }
         if (newPlan.getCode() > currentPlan.getCode()) {
-            return new PlanUpgradedEvent(cmd.id(), cmd.timestamp(), currentPlan, cmd.newPlan());
+            return new PlanUpgradedEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
         } else if (newPlan.getCode() < currentPlan.getCode()) {
-            return new PlanDowngradedEvent(cmd.id(), cmd.timestamp(), currentPlan, cmd.newPlan());
+            return new PlanDowngradedEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
         } else {
             throw new RuntimeException("Can't change to the same plan");
         }
@@ -107,11 +103,11 @@ public class SubscriptionAggregate {
         if (state == SubscriptionState.CANCELED) {
             throw new RuntimeException("Subscription is already canceled.");
         }
-        return new SubscriptionCanceledEvent(cmd.id(), cmd.timestamp(), currentPlan);
+        return new SubscriptionCanceledEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan);
     }
 
     private void preValidateCommand(SubscriptionCommand cmd) {
-        if (cmd.id() == null || cmd.timestamp() == null) {
+        if (cmd.subscriptionId() == null || cmd.timestamp() == null) {
             throw new RuntimeException("Invalid command: " + cmd);
         }
     }

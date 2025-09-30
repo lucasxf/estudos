@@ -1,19 +1,14 @@
 package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
 
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.EventStore;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
 import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
+import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.*;
+import java.util.UUID;
 
 /**
  * @author lucas
@@ -22,48 +17,64 @@ import static exercicio_e.subscriptions_billing.domain.username.event.UsernameEv
 @Repository
 public class UsernameRepositoryImpl implements UsernameRepository {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final EventStore eventStore;
+    private final EventMapper eventMapper;
 
-    public UsernameRepositoryImpl(EventStore eventStore) {
+    public UsernameRepositoryImpl(EventStore eventStore, EventMapper eventMapper) {
         this.eventStore = eventStore;
+        this.eventMapper = eventMapper;
     }
 
     @Override
-    public LoadedStream load(String aggregateType, String usernameKey) {
-        var storedEvents = eventStore.readStream(aggregateType, usernameKey);
+    public LoadedStream load(String usernameKey) {
+        var storedEvents = eventStore.readStream(AGGREGATE_TYPE, usernameKey);
+        var events = fromStoredEvents(storedEvents);
+        var version = getVersion(storedEvents);
+        return new LoadedStream(usernameKey, events, version);
+    }
+
+    @Override
+    public List<StoredEvent> append(String usernameKey,
+                                    long expectedVersion,
+                                    UsernameEvent newEvent,
+                                    UUID correlationId,
+                                    UUID causationId) {
+        return append(usernameKey, expectedVersion,
+                List.of(newEvent),
+                correlationId,
+                causationId);
+    }
+
+    @Override
+    public List<StoredEvent> append(String usernameKey,
+                                    long expectedVersion,
+                                    List<UsernameEvent> newEvents,
+                                    UUID correlationId,
+                                    UUID causationId) {
+        for (var event : newEvents) {
+            var storedEvent = new StoredEvent(
+                    event.id,
+                    AGGREGATE_TYPE,
+                    usernameKey,
+                    expectedVersion + 1,
+                    correlationId,
+                    causationId,
+                    eventMapper
+            );
+            var appended = eventStore.append(AGGREGATE_TYPE, usernameKey, storedEvent);
+            expectedVersion = getVersion(appended);
+        }
         return null;
     }
 
     private List<UsernameEvent> fromStoredEvents(List<StoredEvent> storedEvents) {
-        try {
-            List<UsernameEvent> events = new ArrayList<>();
-            for (StoredEvent e : storedEvents) {
-                if (USERNAME_RESERVED.equals(e.type())) {
-                    var event = objectMapper.readValue(e.payloadJson(), UsernameEvent.UsernameReserved.class);
-                    events.add(event);
-                } else if (USERNAME_CLAIMED.equals(e.type())) {
-                    var event = objectMapper.readValue(e.payloadJson(), UsernameEvent.UsernameClaimed.class);
-                    events.add(event);
-                } else if (USERNAME_RELEASED.equals(e.type())) {
-                    var event = objectMapper.readValue(e.payloadJson(), UsernameEvent.UsernameReleased.class);
-                    events.add(event);
-                }
-            }
-            return events;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return storedEvents.stream()
+                .map(e -> eventMapper.<UsernameEvent>toDomain(e.type(), e.payloadJson()))
+                .toList();
     }
 
-    @Override
-    public List<UsernameEvent> append(String usernameKey, long expectedVersion, UsernameEvent newEvent) {
-        return List.of();
-    }
-
-    @Override
-    public List<UsernameEvent> append(String usernameKey, long expectedVersion, List<UsernameEvent> newEvents) {
-        return List.of();
+    private long getVersion(List<StoredEvent> events) {
+        return events.isEmpty() ? -1L : events.getLast().version();
     }
 
 }

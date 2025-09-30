@@ -10,7 +10,7 @@ import java.util.UUID;
  * @date 18/08/2025
  */
 public record SubscriptionCanceledEvent(
-        UUID id,
+        UUID subscriptionId,
         Instant timestamp,
         Plan canceledPlan) implements SubscriptionEvent {
 

@@ -17,11 +17,11 @@ public sealed interface SubscriptionEvent permits
         PlanDowngradedEvent {
 
     /**
-     * Event ID.
+     * Subscription Aggregate ID.
      *
-     * @return this event ID.
+     * @return this subscription's ID.
      */
-    UUID id();
+    UUID subscriptionId();
 
     Instant timestamp();
 

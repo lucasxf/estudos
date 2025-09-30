@@ -37,7 +37,7 @@ public class AccountAggregate {
         if (state != AccountStatus.INACTIVE) {
             throw new IllegalStateException("Account already created or deleted");
         }
-        return new AccountCreated(command.id(), command.timestamp(), command.username());
+        return new AccountCreated(command.accountId(), command.timestamp(), command.username());
     }
 
     public AccountDeleted decide(DeleteAccountCommand command) {
@@ -48,7 +48,7 @@ public class AccountAggregate {
         if (command.username() == null || command.username().isBlank()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
         }
-        return new AccountDeleted(command.id(), command.timestamp(), command.username());
+        return new AccountDeleted(command.accountId(), command.timestamp(), command.username());
     }
 
     private void replay() {

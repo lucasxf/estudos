@@ -11,16 +11,28 @@ import java.util.UUID;
  */
 public sealed interface SubscriptionCommand {
 
-    UUID id();
+    /**
+     * Subscription Aggregate ID.
+     *
+     * @return this subscription's ID.
+     */
+    UUID subscriptionId();
 
     Instant timestamp();
 
-    record StartTrialCommand(UUID id, Instant timestamp, Plan preferredPlan) implements SubscriptionCommand { }
+    record StartTrialCommand(
+            UUID subscriptionId,
+            Instant timestamp,
+            Plan preferredPlan) implements SubscriptionCommand {}
 
-    record ConvertSubscriptionCommand(UUID id, Instant timestamp, Plan plan) implements SubscriptionCommand { }
+    record ConvertSubscriptionCommand(UUID subscriptionId,
+                                      Instant timestamp,
+                                      Plan plan) implements SubscriptionCommand {}
 
-    record ChangePlanCommand(UUID id, Instant timestamp, Plan newPlan) implements SubscriptionCommand {}
+    record ChangePlanCommand(UUID subscriptionId,
+                             Instant timestamp,
+                             Plan newPlan) implements SubscriptionCommand {}
 
-    record CancelSubscriptionCommand(UUID id, Instant timestamp) implements SubscriptionCommand { }
+    record CancelSubscriptionCommand(UUID subscriptionId, Instant timestamp) implements SubscriptionCommand {}
 
 }

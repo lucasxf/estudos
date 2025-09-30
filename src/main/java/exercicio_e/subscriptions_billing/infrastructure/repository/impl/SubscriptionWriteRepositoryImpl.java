@@ -33,7 +33,7 @@ public class SubscriptionWriteRepositoryImpl implements SubscriptionWriteReposit
 
     private StoredEvent toStoredEvent(UUID subscriptionId, SubscriptionEvent event) {
         return new StoredEvent(
-                event.id(),
+                event.subscriptionId(),
                 subscriptionId,
                 123L,
                 event.timestamp(),

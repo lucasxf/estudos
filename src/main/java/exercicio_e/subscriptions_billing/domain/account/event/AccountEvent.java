@@ -9,14 +9,14 @@ import java.util.UUID;
  */
 public sealed interface AccountEvent {
 
-    UUID id();
+    UUID accountId();
 
     Instant timestamp();
 
     String username();
 
-    record AccountCreated(UUID id, Instant timestamp, String username) implements AccountEvent { }
+    record AccountCreated(UUID accountId, Instant timestamp, String username) implements AccountEvent { }
 
-    record AccountDeleted(UUID id, Instant timestamp, String username) implements AccountEvent { }
+    record AccountDeleted(UUID accountId, Instant timestamp, String username) implements AccountEvent { }
 
 }

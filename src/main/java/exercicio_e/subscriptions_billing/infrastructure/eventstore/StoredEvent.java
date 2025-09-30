@@ -11,13 +11,7 @@ import java.util.UUID;
  */
 public record StoredEvent(
         UUID id,
-        /**
-         * The type of the event, e.g., "AccountCreated", "UsernameReserved".
-         */
         String type,
-        /**
-         * The aggregate type, e.g., "Account", "Username".
-         */
         String aggregateType,
         String aggregateId,
         long version,
