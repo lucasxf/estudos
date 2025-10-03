@@ -1,4 +1,4 @@
-package exercicio_e.subscriptions_billing.infrastructure.serialization.exception;
+package exercicio_e.subscriptions_billing.infrastructure.exception;
 
 
 /**

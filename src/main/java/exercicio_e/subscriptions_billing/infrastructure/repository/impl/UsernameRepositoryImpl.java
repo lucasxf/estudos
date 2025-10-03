@@ -7,6 +7,7 @@ import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepos
 import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,20 +52,20 @@ public class UsernameRepositoryImpl implements UsernameRepository {
                                     List<UsernameEvent> newEvents,
                                     UUID correlationId,
                                     UUID causationId) {
+        List<String> types = new ArrayList<>();
+        List<String> payloads = new ArrayList<>();
         for (var event : newEvents) {
-            var storedEvent = new StoredEvent(
-                    event.id,
-                    AGGREGATE_TYPE,
-                    usernameKey,
-                    expectedVersion + 1,
-                    correlationId,
-                    causationId,
-                    eventMapper
-            );
-            var appended = eventStore.append(AGGREGATE_TYPE, usernameKey, storedEvent);
-            expectedVersion = getVersion(appended);
+            types.add(event.getClass().getSimpleName());
+            payloads.add(eventMapper.toJson(event));
         }
-        return null;
+        return eventStore.appendRaw(
+                AGGREGATE_TYPE,
+                usernameKey,
+                expectedVersion,
+                types,
+                payloads,
+                correlationId,
+                causationId);
     }
 
     private List<UsernameEvent> fromStoredEvents(List<StoredEvent> storedEvents) {

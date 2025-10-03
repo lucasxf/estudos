@@ -2,7 +2,7 @@ package exercicio_e.subscriptions_billing.infrastructure.serialization;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import exercicio_e.subscriptions_billing.infrastructure.serialization.exception.EventMappingException;
+import exercicio_e.subscriptions_billing.infrastructure.exception.EventMappingException;
 
 /**
  * @author lucas
