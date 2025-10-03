@@ -18,12 +18,14 @@ public sealed interface UsernameEvent {
     record UsernameReserved(String usernameKey, Instant reservedAt) implements UsernameEvent {
     }
 
-    record UsernameClaimed(String usernameKey, UUID accountId,
+    record UsernameClaimed(String usernameKey,
+                           UUID accountId,
                            Instant claimedAt) implements UsernameEvent {
     }
 
-    record UsernameReleased(String usernameKey, UUID releasedByCommandId,
-                            Instant releasedAt, String reason) implements UsernameEvent {
+    record UsernameReleased(String usernameKey,
+                            Instant releasedAt,
+                            String reason) implements UsernameEvent {
     }
 
 }

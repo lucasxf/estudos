@@ -4,6 +4,7 @@ import exercicio_e.subscriptions_billing.domain.account.AccountAggregate;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
+import exercicio_e.subscriptions_billing.domain.username.UsernameAggregate;
 import exercicio_e.subscriptions_billing.infrastructure.repository.AccountRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
 import org.springframework.stereotype.Component;
@@ -37,10 +38,9 @@ public class AccountCommandHandler {
 
     public List<AccountEvent> handleCreateAccountCommand(
             UUID correlationId, CreateAccountCommand command) {
-        var user =
-        var stream = accountRepository.load(command.accountId());
-        var aggregate = new AccountAggregate(command.accountId(), stream.history());
-        var event = aggregate.decide(command);
+        final String usernameKey = command.usernameKey();
+        var usernameStream = usernameRepository.load(usernameKey);
+        final UsernameAggregate usernameAggregate = UsernameAggregate.from(usernameKey, usernameStream.history(), usernameStream.lastVersion());
         return null;
     }
 

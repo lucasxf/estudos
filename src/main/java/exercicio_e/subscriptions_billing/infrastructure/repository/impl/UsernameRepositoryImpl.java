@@ -29,8 +29,8 @@ public class UsernameRepositoryImpl implements UsernameRepository {
     @Override
     public LoadedStream load(String usernameKey) {
         var storedEvents = eventStore.readStream(AGGREGATE_TYPE, usernameKey);
+        var version = eventStore.getCurrentVersion(AGGREGATE_TYPE, usernameKey);
         var events = fromStoredEvents(storedEvents);
-        var version = getVersion(storedEvents);
         return new LoadedStream(usernameKey, events, version);
     }
 
@@ -40,7 +40,8 @@ public class UsernameRepositoryImpl implements UsernameRepository {
                                     UsernameEvent newEvent,
                                     UUID correlationId,
                                     UUID causationId) {
-        return append(usernameKey, expectedVersion,
+        return append(usernameKey,
+                expectedVersion,
                 List.of(newEvent),
                 correlationId,
                 causationId);
@@ -72,10 +73,6 @@ public class UsernameRepositoryImpl implements UsernameRepository {
         return storedEvents.stream()
                 .map(e -> eventMapper.<UsernameEvent>toDomain(e.type(), e.payloadJson()))
                 .toList();
-    }
-
-    private long getVersion(List<StoredEvent> events) {
-        return events.isEmpty() ? -1L : events.getLast().version();
     }
 
 }

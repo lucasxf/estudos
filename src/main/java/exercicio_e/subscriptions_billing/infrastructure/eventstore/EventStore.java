@@ -31,7 +31,7 @@ public class EventStore {
         final var key = storeKey(aggregateType, aggregateId);
         final var eventStream = eventsById.computeIfAbsent(key, __ -> new ArrayList<>());
         synchronized (eventStream) {
-            long currentVersion = getCurrentVersion(eventStream);
+            long currentVersion = getCurrentVersion(aggregateType, aggregateId);
             if (currentVersion != expectedVersion) {
                 throw new ConcurrencyException("Expected version[ " + expectedVersion + "] but was [" + currentVersion + "]");
             }
@@ -72,6 +72,26 @@ public class EventStore {
                 causationId);
     }
 
+    public long getCurrentVersion(String aggregateType, String aggregateId) {
+        var key = storeKey(aggregateType, aggregateId);
+        var events = eventsById.getOrDefault(key, new ArrayList<>());
+        return getLastVersion(events);
+    }
+
+    private static long getLastVersion(List<StoredEvent> events) {
+        return events.isEmpty() ? -1 : events.getLast().version();
+    }
+
+    public List<StoredEvent> readStream(
+            String aggregateType, String aggregateId) {
+        var key = storeKey(aggregateType, aggregateId);
+        return List.copyOf(eventsById.getOrDefault(key, new ArrayList<>()));
+    }
+
+    private String storeKey(String aggregateType, String aggregateId) {
+        return aggregateType + ":" + aggregateId;
+    }
+
     private void preValidate(String aggregateType, String aggregateId, List<String> eventTypes,
                              List<String> payloadJson) {
         if (aggregateType == null || aggregateType.isBlank()) {
@@ -83,34 +103,6 @@ public class EventStore {
         if (eventTypes == null || payloadJson == null || eventTypes.size() != payloadJson.size()) {
             throw new IllegalArgumentException("types/payload size mismatch");
         }
-    }
-
-    public long getCurrentVersion(List<StoredEvent> events) {
-        return events.isEmpty() ? -1 : events.getLast().version();
-    }
-
-    public List<StoredEvent> append(
-            String aggregateType, String aggregateId, StoredEvent event) {
-        var key = storeKey(aggregateType, aggregateId);
-        final var events = eventsById.getOrDefault(key, new ArrayList<>());
-        events.add(event);
-        eventsById.putIfAbsent(key, events);
-        return events;
-    }
-
-    public List<StoredEvent> readStream(
-            String aggregateType, String aggregateId) {
-        var key = storeKey(aggregateType, aggregateId);
-        return eventsById.getOrDefault(key, new ArrayList<>());
-    }
-
-    public long currentVersion(
-            String aggregateType, UUID aggregateId) {
-        return -1L;
-    }
-
-    private String storeKey(String aggregateType, String aggregateId) {
-        return aggregateType + ":" + aggregateId;
     }
 
 }

@@ -17,16 +17,16 @@ public interface UsernameRepository {
     LoadedStream load(String usernameKey);
 
     List<StoredEvent> append(String usernameKey,
-                               long expectedVersion,
+                             long expectedVersion,
                              UsernameEvent newEvent,
-                               UUID correlationId,
-                               UUID causationId);
+                             UUID correlationId,
+                             UUID causationId);
 
     List<StoredEvent> append(String usernameKey,
-                               long expectedVersion,
-                               List<UsernameEvent> newEvents,
-                               UUID correlationId,
-                               UUID causationId);
+                             long expectedVersion,
+                             List<UsernameEvent> newEvents,
+                             UUID correlationId,
+                             UUID causationId);
 
     record LoadedStream(String usernameKey, List<UsernameEvent> history, long lastVersion) { }
 

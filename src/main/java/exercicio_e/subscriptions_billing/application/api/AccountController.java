@@ -27,11 +27,10 @@ public class AccountController {
 
     public ResponseEntity<AccountResponse> create(
             @PathVariable String username,
-
             @RequestHeader(value = "X-Correlation-Id", required = false) String corr) {
         var correlationId = getCorrelationId(corr);
         var usernameKey = usernameKey(username);
-        var command = createAccountCommand(usernameKey);
+        var command = createAccountCommand(username, usernameKey);
         commandHandler.handle(correlationId, command);
         return ResponseEntity.accepted().build();
     }
@@ -42,8 +41,8 @@ public class AccountController {
                 UUID.randomUUID();
     }
 
-    private CreateAccountCommand createAccountCommand(String usernameKey) {
-        return new CreateAccountCommand(UUID.randomUUID(), Instant.now(), usernameKey);
+    private CreateAccountCommand createAccountCommand(String username, String usernameKey) {
+        return new CreateAccountCommand(UUID.randomUUID(), Instant.now(), username, usernameKey);
     }
 
     private String usernameKey(String username) {
