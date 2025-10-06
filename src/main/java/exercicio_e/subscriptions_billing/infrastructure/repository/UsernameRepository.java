@@ -16,12 +16,31 @@ public interface UsernameRepository {
 
     LoadedStream load(String usernameKey);
 
+    /**
+     * Append a new event to the event store.
+     *
+     * @param usernameKey
+     * @param expectedVersion
+     * @param newEvent
+     * @param correlationId
+     * @param causationId
+     * @return
+     */
     List<StoredEvent> append(String usernameKey,
                              long expectedVersion,
                              UsernameEvent newEvent,
                              UUID correlationId,
                              UUID causationId);
 
+    /**
+     *
+     * @param usernameKey
+     * @param expectedVersion
+     * @param newEvents
+     * @param correlationId
+     * @param causationId
+     * @return
+     */
     List<StoredEvent> append(String usernameKey,
                              long expectedVersion,
                              List<UsernameEvent> newEvents,

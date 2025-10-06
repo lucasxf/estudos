@@ -57,8 +57,7 @@ public class UsernameAggregate {
         this.claimedBy = null;
     }
 
-    public UsernameReserved decideReserve(String usernameKey) {
-        validateKey(usernameKey);
+    public UsernameReserved decideReserve() {
         if (this.status == UsernameStatus.RESERVED) {
             throw new UsernameUnavailableException("Username is already reserved.");
         }

@@ -6,6 +6,9 @@ import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.D
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreated;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountDeleted;
+import exercicio_e.subscriptions_billing.domain.exception.AccountCreationException;
+import exercicio_e.subscriptions_billing.domain.exception.DomainException;
+import exercicio_e.subscriptions_billing.domain.exception.InvalidAccountException;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,25 +20,33 @@ import java.util.UUID;
 public class AccountAggregate {
 
     private final UUID id;
-    private final List<AccountEvent> eventStream;
+    private final List<AccountEvent> history;
 
     private long version = -1L;
     private AccountStatus state;
 
-    public AccountAggregate(UUID id, List<AccountEvent> eventStream) {
-        if (id == null || eventStream == null) {
-            throw new IllegalArgumentException("Event stream and ID cannot be null");
+    private AccountAggregate(UUID id, List<AccountEvent> history, long lastVersion) {
+        if (id == null || history == null) {
+            throw new InvalidAccountException("Event stream and ID cannot be null");
         }
         this.id = id;
-        this.eventStream = eventStream;
+        this.history = history;
         this.state = AccountStatus.INACTIVE;
         replay();
+    }
+
+    public static AccountAggregate from(UUID id, List<AccountEvent> history, long lastVersion) {
+        final var aggregate = new AccountAggregate(id, history, lastVersion);
+        aggregate.version = lastVersion;
+        return aggregate;
     }
 
     public AccountCreated decide(CreateAccountCommand command) {
         validateCommand(command);
         if (state != AccountStatus.INACTIVE) {
-            throw new IllegalStateException("Account already created or deleted");
+            throw new AccountCreationException(
+                    "Uma conta já com este nome de usuário já foi criada " +
+                            "ou está em um estado inválido: " + command.username());
         }
         return new AccountCreated(command.accountId(), command.timestamp(), command.username());
     }
@@ -52,25 +63,21 @@ public class AccountAggregate {
     }
 
     private void replay() {
-        for (AccountEvent event : eventStream) {
+        for (AccountEvent event : history) {
             if (event instanceof AccountCreated) {
                 apply((AccountCreated) event);
             } else if (event instanceof AccountDeleted) {
                 apply((AccountDeleted) event);
             }
-            this.version++;
         }
     }
 
     private void validateCommand(AccountCommand command) {
         if (command == null) {
-            throw new IllegalArgumentException("Command cannot be null");
-        }
-        if (command.timestamp() == null) {
-            throw new IllegalArgumentException("Timestamp cannot be null");
+            throw new DomainException("Comando não pode ser nulo");
         }
         if (command.username() == null || command.username().isBlank()) {
-            throw new IllegalArgumentException("Username cannot be null or empty");
+            throw new InvalidAccountException("Nome de usuário inválido");
         }
     }
 
