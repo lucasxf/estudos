@@ -3,11 +3,11 @@ package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.EventStore;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
+import exercicio_e.subscriptions_billing.infrastructure.repository.AbstractEventSourcingRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.AccountRepository;
 import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,21 +16,17 @@ import java.util.UUID;
  * @date 23/09/2025
  */
 @Repository
-public class AccountRepositoryImpl implements AccountRepository {
-
-    private final EventStore eventStore;
-    private final EventMapper mapper;
+public class AccountRepositoryImpl extends AbstractEventSourcingRepository<AccountEvent> implements AccountRepository {
 
     public AccountRepositoryImpl(EventStore eventStore, EventMapper mapper) {
-        this.eventStore = eventStore;
-        this.mapper = mapper;
+        super(eventStore, mapper);
     }
 
     @Override
     public LoadedStream load(String aggregateType, UUID aggregateId) {
         final var storedEvents = eventStore.readStream(AGGREGATE_TYPE, aggregateId.toString());
         final var version = eventStore.getCurrentVersion(AGGREGATE_TYPE, aggregateId.toString());
-        final var events = fromStoredEvents(storedEvents);
+        final var events = deserialize(storedEvents);
         return new LoadedStream(aggregateId, events, version);
     }
 
@@ -56,26 +52,14 @@ public class AccountRepositoryImpl implements AccountRepository {
             List<AccountEvent> newEvents,
             UUID correlationId,
             UUID causationId) {
-        final List<String> types = new ArrayList<>();
-        final List<String> payloads = new ArrayList<>();
-        newEvents.forEach(event -> {
-            types.add(event.getClass().getSimpleName());
-            payloads.add(mapper.toJson(event));
-        });
-        return eventStore.appendRaw(
+
+        return appendDomainEvents(
                 AGGREGATE_TYPE,
                 aggregateId.toString(),
                 expectedVersion,
-                types,
-                payloads,
+                newEvents,
                 correlationId,
                 causationId);
-    }
-
-    private List<AccountEvent> fromStoredEvents(List<StoredEvent> storedEvents) {
-        return storedEvents.stream()
-                .map(e -> mapper.<AccountEvent>toDomain(e.type(), e.payloadJson()))
-                .toList();
     }
 
 }

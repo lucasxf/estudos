@@ -18,6 +18,7 @@ import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionR
 import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,7 +36,10 @@ public class AccountCommandHandler {
     private final AccountRepository accountRepository;
     private final SubscriptionRepository subscriptionRepository;
 
-    public AccountCommandHandler(UsernameRepository usernameRepository, AccountRepository accountRepository, SubscriptionRepository subscriptionRepository) {
+    public AccountCommandHandler(
+            UsernameRepository usernameRepository,
+            AccountRepository accountRepository,
+            SubscriptionRepository subscriptionRepository) {
         this.usernameRepository = usernameRepository;
         this.accountRepository = accountRepository;
         this.subscriptionRepository = subscriptionRepository;
@@ -53,9 +57,10 @@ public class AccountCommandHandler {
     public List<AccountEvent> handleCreateAccountCommand(
             UUID correlationId, CreateAccountCommand command) {
         final String usernameKey = command.usernameKey();
-        final UsernameRepository.LoadedStream usernameStream = usernameRepository.load(usernameKey);
+        final var accountId = command.accountId();
 
         // 1. reservar nome de usuário
+        final UsernameRepository.LoadedStream usernameStream = usernameRepository.load(usernameKey);
         final UsernameAggregate usernameAggregate =
                 UsernameAggregate.from(usernameKey, usernameStream.history(), usernameStream.lastVersion());
         final ReserveUsername reserveUsername = new ReserveUsername(UUID.randomUUID(), usernameKey);
@@ -67,8 +72,8 @@ public class AccountCommandHandler {
                 correlationId,
                 reserveUsername.commandId());
 
+
         // 2. criar conta
-        final var accountId = command.accountId();
         final var accountCommandId = UUID.randomUUID();
         final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
         final AccountAggregate accountAggregate =
@@ -82,11 +87,16 @@ public class AccountCommandHandler {
                 accountCommandId);
 
         // 3. reivindicar nome de usuário
+        final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
+        UsernameAggregate usernameAggRefresh =
+                UsernameAggregate.from(usernameKey, usernameReload.history(), usernameReload.lastVersion());
         final ClaimUsername claimUsername = new ClaimUsername(accountCommandId, usernameKey, accountId);
-        UsernameClaimed usernameClaimed = usernameAggregate.decide(claimUsername);
+        final UsernameClaimed usernameClaimed =
+                usernameAggRefresh.decide(claimUsername);
+
         final List<StoredEvent> usernameClaimedEvents = usernameRepository.append(
                 usernameKey,
-                usernameStream.lastVersion(),
+                usernameReload.lastVersion(),
                 usernameClaimed,
                 correlationId,
                 claimUsername.commandId());
@@ -94,7 +104,7 @@ public class AccountCommandHandler {
         // 4. Iniciar o período de teste de assinatura
         final var subscriptionId = UUID.randomUUID();
         final var subscriptionStream = subscriptionRepository.load(subscriptionId);
-        final StartTrial startTrial = new StartTrial(UUID.randomUUID(), UUID.randomUUID(), Plan.STANDARD);
+        final StartTrial startTrial = new StartTrial(UUID.randomUUID(), subscriptionId, Instant.now(), Plan.STANDARD);
         SubscriptionAggregate subscriptionAggregate = SubscriptionAggregate.from(
                 subscriptionId,
                 subscriptionStream.history(),
@@ -103,14 +113,16 @@ public class AccountCommandHandler {
         final TrialStarted trialStarted = subscriptionAggregate.decide(startTrial);
         final List<StoredEvent> trialStartedEvents = subscriptionRepository.append(
                 subscriptionId,
-                accountStream.lastVersion(),
+                subscriptionStream.lastVersion(),
                 trialStarted,
                 correlationId,
                 startTrial.commandId());
         return null;
     }
 
-    private void handleDeleteAccountCommand(UUID correlationId, AccountCommand.DeleteAccountCommand cmd) {
+    private void handleDeleteAccountCommand(
+            UUID correlationId,
+            AccountCommand.DeleteAccountCommand cmd) {
 
     }
 

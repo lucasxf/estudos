@@ -16,6 +16,13 @@ public sealed interface SubscriptionEvent permits
         PlanUpgraded,
         PlanDowngraded {
 
+    String TRIAL_STARTED = "TrialStarted";
+    String SUBSCRIPTION_CONVERTED = "SubscriptionConverted";
+    String SUBSCRIPTION_CANCELED = "SubscriptionCanceled";
+    String PLAN_UPGRADED = "PlanUpgraded";
+    String PLAN_DOWNGRADED = "PlanDowngraded";
+
+
     /**
      * Subscription Aggregate ID.
      *

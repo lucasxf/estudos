@@ -56,7 +56,7 @@ public class SubscriptionAggregate {
         if (!id.equals(cmd.subscriptionId())) {
             throw new RuntimeException("Invalid subscription ID: " + cmd.subscriptionId());
         }
-        Instant start = Instant.now();
+        Instant start = cmd.timestamp();
         Instant trialEnd = calculateTrialEnd(start);
         return new TrialStarted(
                 cmd.subscriptionId(), start, trialEnd, cmd.preferredPlan());
@@ -76,7 +76,7 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Cannot convert to invalid plan");
         }
         return new SubscriptionConverted(
-                cmd.subscriptionId(), Instant.now(), currentPlan, cmd.plan());
+                cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.plan());
     }
 
     /**
@@ -93,9 +93,9 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Invalid plan");
         }
         if (newPlan.getCode() > currentPlan.getCode()) {
-            return new PlanUpgraded(cmd.subscriptionId(), Instant.now(), currentPlan, cmd.newPlan());
+            return new PlanUpgraded(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
         } else if (newPlan.getCode() < currentPlan.getCode()) {
-            return new PlanDowngraded(cmd.subscriptionId(), Instant.now(), currentPlan, cmd.newPlan());
+            return new PlanDowngraded(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
         } else {
             throw new RuntimeException("Can't change to the same plan");
         }
@@ -111,7 +111,7 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Subscription is already canceled.");
         }
         return new SubscriptionCanceled(
-                cmd.subscriptionId(), Instant.now(), currentPlan);
+                cmd.subscriptionId(), cmd.timestamp(), currentPlan);
     }
 
     private void preValidateCommand(SubscriptionCommand cmd) {

@@ -10,6 +10,9 @@ import java.util.UUID;
  */
 public sealed interface AccountEvent {
 
+    String ACCOUNT_CREATED = "AccountCreated";
+    String ACCOUNT_DELETED = "AccountDeleted";
+
     UUID accountId();
 
     Instant timestamp();

@@ -2,8 +2,12 @@ package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
 
 import exercicio_e.subscriptions_billing.domain.account.Account;
 import exercicio_e.subscriptions_billing.domain.subscription.event.SubscriptionEvent;
+import exercicio_e.subscriptions_billing.infrastructure.eventstore.EventStore;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
+import exercicio_e.subscriptions_billing.infrastructure.repository.AbstractEventSourcingRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionRepository;
+import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,8 +16,12 @@ import java.util.UUID;
  * @author Lucas Xavier Ferreira
  * @date 28/08/2025
  */
-public class SubscriptionRepositoryImpl implements SubscriptionRepository {
+@Repository
+public class SubscriptionRepositoryImpl extends AbstractEventSourcingRepository<SubscriptionEvent> implements SubscriptionRepository {
 
+    public SubscriptionRepositoryImpl(EventStore eventStore, EventMapper eventMapper) {
+        super(eventStore, eventMapper);
+    }
 
     @Override
     public LoadedStream load(UUID subscriptionId) {
