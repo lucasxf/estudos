@@ -2,7 +2,6 @@ package exercicio_e.subscriptions_billing.domain.subscription.command;
 
 import exercicio_e.subscriptions_billing.domain.subscription.plan.Plan;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -12,27 +11,41 @@ import java.util.UUID;
 public sealed interface SubscriptionCommand {
 
     /**
+     * Command ID.
+     *
+     * @return this command's ID.
+     */
+    UUID commandId();
+
+    /**
      * Subscription Aggregate ID.
      *
      * @return this subscription's ID.
      */
     UUID subscriptionId();
 
-    Instant timestamp();
 
-    record StartTrialCommand(
+    record StartTrial(
+            UUID commandId,
             UUID subscriptionId,
-            Instant timestamp,
-            Plan preferredPlan) implements SubscriptionCommand {}
+            Plan preferredPlan) implements SubscriptionCommand {
+    }
 
-    record ConvertSubscriptionCommand(UUID subscriptionId,
-                                      Instant timestamp,
-                                      Plan plan) implements SubscriptionCommand {}
+    record ConvertSubscription(
+            UUID commandId,
+            UUID subscriptionId,
+            Plan plan) implements SubscriptionCommand {
+    }
 
-    record ChangePlanCommand(UUID subscriptionId,
-                             Instant timestamp,
-                             Plan newPlan) implements SubscriptionCommand {}
+    record ChangePlan(
+            UUID commandId,
+            UUID subscriptionId,
+            Plan newPlan) implements SubscriptionCommand {
+    }
 
-    record CancelSubscriptionCommand(UUID subscriptionId, Instant timestamp) implements SubscriptionCommand {}
+    record CancelSubscription(
+            UUID commandId,
+            UUID subscriptionId) implements SubscriptionCommand {
+    }
 
 }

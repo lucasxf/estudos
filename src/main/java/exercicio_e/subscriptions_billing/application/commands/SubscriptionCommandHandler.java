@@ -19,22 +19,22 @@ public interface SubscriptionCommandHandler {
 
     default List<SubscriptionEvent> handleCommand(UUID accountId, SubscriptionCommand command) {
         switch (command) {
-            case SubscriptionCommand.StartTrialCommand cmd -> handleStartTrialCommand(accountId, cmd);
-            case SubscriptionCommand.ConvertSubscriptionCommand cmd -> handleConvertSubscriptionCommand(accountId, cmd);
-            case SubscriptionCommand.ChangePlanCommand cmd -> handleUpgradePlanCommand(accountId, cmd);
-            case SubscriptionCommand.CancelSubscriptionCommand cmd -> handleCancelSubscriptionCommand(accountId, cmd);
+            case SubscriptionCommand.StartTrial cmd -> handleStartTrialCommand(accountId, cmd);
+            case SubscriptionCommand.ConvertSubscription cmd -> handleConvertSubscriptionCommand(accountId, cmd);
+            case SubscriptionCommand.ChangePlan cmd -> handleUpgradePlanCommand(accountId, cmd);
+            case SubscriptionCommand.CancelSubscription cmd -> handleCancelSubscriptionCommand(accountId, cmd);
             default -> throw new IllegalStateException("Unexpected value: " + command);
         }
         return null;
     }
 
 
-    List<SubscriptionEvent> handleStartTrialCommand(UUID accountId, SubscriptionCommand.StartTrialCommand command);
+    List<SubscriptionEvent> handleStartTrialCommand(UUID accountId, SubscriptionCommand.StartTrial command);
 
-    List<SubscriptionEvent> handleConvertSubscriptionCommand(UUID accountId, SubscriptionCommand.ConvertSubscriptionCommand command);
+    List<SubscriptionEvent> handleConvertSubscriptionCommand(UUID accountId, SubscriptionCommand.ConvertSubscription command);
 
-    List<SubscriptionEvent> handleUpgradePlanCommand(UUID accountId, SubscriptionCommand.ChangePlanCommand command);
+    List<SubscriptionEvent> handleUpgradePlanCommand(UUID accountId, SubscriptionCommand.ChangePlan command);
 
-    List<SubscriptionEvent> handleCancelSubscriptionCommand(UUID accountId, SubscriptionCommand.CancelSubscriptionCommand command);
+    List<SubscriptionEvent> handleCancelSubscriptionCommand(UUID accountId, SubscriptionCommand.CancelSubscription command);
 
 }

@@ -9,14 +9,15 @@ import java.util.UUID;
  * @author Lucas Xavier Ferreira
  * @date 18/08/2025
  */
-public record SubscriptionCanceledEvent(
+public record PlanUpgraded(
         UUID subscriptionId,
         Instant timestamp,
-        Plan canceledPlan) implements SubscriptionEvent {
+        Plan oldPlan,
+        Plan newPlan) implements SubscriptionEvent {
 
     @Override
     public Plan plan() {
-        return canceledPlan;
+        return newPlan;
     }
 
 }

@@ -1,6 +1,7 @@
 package exercicio_e.subscriptions_billing.infrastructure.repository;
 
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
+import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,9 +20,19 @@ public interface AccountRepository {
 
     LoadedStream load(String aggregateType, UUID aggregateId);
 
-    List<AccountEvent> append(UUID aggregateId, long expectedVersion, AccountEvent newEvent);
+    List<StoredEvent> append(
+            UUID aggregateId,
+            long expectedVersion,
+            AccountEvent newEvent,
+            UUID correlationId,
+            UUID causationId);
 
-    List<AccountEvent> append(UUID aggregateId, long expectedVersion, List<AccountEvent> newEvents);
+    List<StoredEvent> append(
+            UUID aggregateId,
+            long expectedVersion,
+            List<AccountEvent> newEvents,
+            UUID correlationId,
+            UUID causationId);
 
     record LoadedStream(UUID aggregateId, List<AccountEvent> history, long lastVersion) { }
 

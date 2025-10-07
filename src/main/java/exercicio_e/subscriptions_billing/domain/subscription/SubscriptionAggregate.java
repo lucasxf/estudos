@@ -20,28 +20,35 @@ public class SubscriptionAggregate {
 
     private final UUID id;
     private final List<SubscriptionEvent> eventStream;
-    private long version = 0L;
+    private long version = -1L;
     private SubscriptionState state;
     private Plan currentPlan;
 
-    public SubscriptionAggregate(UUID subscriptionId) {
-        this(subscriptionId, null);
+    private SubscriptionAggregate(UUID subscriptionId, long lastVersion) {
+        this(subscriptionId, null, lastVersion);
     }
 
-    public SubscriptionAggregate(UUID subscriptionId, List<SubscriptionEvent> eventStream) {
+    private SubscriptionAggregate(UUID subscriptionId, List<SubscriptionEvent> eventStream, long lastVersion) {
         if (subscriptionId == null) {
             throw new RuntimeException("Invalid aggregate ID.");
         }
         this.id = subscriptionId;
         this.eventStream = eventStream;
-        replay(eventStream);
+        replay();
+    }
+
+    public static SubscriptionAggregate from(
+            UUID subscriptionId,
+            List<SubscriptionEvent> eventStream,
+            long lastVersion) {
+        return new SubscriptionAggregate(subscriptionId, eventStream, lastVersion);
     }
 
     /**
      * @param cmd
      * @return
      */
-    public TrialStartedEvent decide(StartTrialCommand cmd) {
+    public TrialStarted decide(StartTrial cmd) {
         preValidateCommand(cmd);
         if (state != null) {
             throw new RuntimeException("Invalid subscription state: " + state);
@@ -49,9 +56,9 @@ public class SubscriptionAggregate {
         if (!id.equals(cmd.subscriptionId())) {
             throw new RuntimeException("Invalid subscription ID: " + cmd.subscriptionId());
         }
-        Instant start = cmd.timestamp();
+        Instant start = Instant.now();
         Instant trialEnd = calculateTrialEnd(start);
-        return new TrialStartedEvent(
+        return new TrialStarted(
                 cmd.subscriptionId(), start, trialEnd, cmd.preferredPlan());
     }
 
@@ -59,7 +66,7 @@ public class SubscriptionAggregate {
      * @param cmd
      * @return
      */
-    public SubscriptionConvertedEvent decide(ConvertSubscriptionCommand cmd) {
+    public SubscriptionConverted decide(ConvertSubscription cmd) {
         preValidateCommand(cmd);
         if (SubscriptionState.TRIAL != state) {
             throw new RuntimeException("Cannot convert a subscription that is not on trial");
@@ -68,15 +75,15 @@ public class SubscriptionAggregate {
         if (cmd.plan() == null && currentPlan == null) {
             throw new RuntimeException("Cannot convert to invalid plan");
         }
-        return new SubscriptionConvertedEvent(
-                cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.plan());
+        return new SubscriptionConverted(
+                cmd.subscriptionId(), Instant.now(), currentPlan, cmd.plan());
     }
 
     /**
      * @param cmd
      * @return
      */
-    public SubscriptionEvent decide(ChangePlanCommand cmd) {
+    public SubscriptionEvent decide(ChangePlan cmd) {
         preValidateCommand(cmd);
         if (state == SubscriptionState.CANCELED) {
             throw new RuntimeException("Cannot change plans on a canceled subscription");
@@ -86,9 +93,9 @@ public class SubscriptionAggregate {
             throw new RuntimeException("Invalid plan");
         }
         if (newPlan.getCode() > currentPlan.getCode()) {
-            return new PlanUpgradedEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
+            return new PlanUpgraded(cmd.subscriptionId(), Instant.now(), currentPlan, cmd.newPlan());
         } else if (newPlan.getCode() < currentPlan.getCode()) {
-            return new PlanDowngradedEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan, cmd.newPlan());
+            return new PlanDowngraded(cmd.subscriptionId(), Instant.now(), currentPlan, cmd.newPlan());
         } else {
             throw new RuntimeException("Can't change to the same plan");
         }
@@ -99,15 +106,16 @@ public class SubscriptionAggregate {
      * @param cmd
      * @return
      */
-    public SubscriptionEvent decide(CancelSubscriptionCommand cmd) {
+    public SubscriptionEvent decide(CancelSubscription cmd) {
         if (state == SubscriptionState.CANCELED) {
             throw new RuntimeException("Subscription is already canceled.");
         }
-        return new SubscriptionCanceledEvent(cmd.subscriptionId(), cmd.timestamp(), currentPlan);
+        return new SubscriptionCanceled(
+                cmd.subscriptionId(), Instant.now(), currentPlan);
     }
 
     private void preValidateCommand(SubscriptionCommand cmd) {
-        if (cmd.subscriptionId() == null || cmd.timestamp() == null) {
+        if (cmd.subscriptionId() == null) {
             throw new RuntimeException("Invalid command: " + cmd);
         }
     }
@@ -136,26 +144,26 @@ public class SubscriptionAggregate {
         return currentPlan;
     }
 
-    private void replay(List<SubscriptionEvent> events) {
-        if (events == null) {
+    private void replay() {
+        if (eventStream == null) {
             return;
         }
-        for (SubscriptionEvent e : events) {
-            if (e instanceof TrialStartedEvent) {
-                apply((TrialStartedEvent) e);
-            } else if (e instanceof SubscriptionConvertedEvent) {
-                apply((SubscriptionConvertedEvent) e);
-            } else if (e instanceof PlanUpgradedEvent) {
-                apply((PlanUpgradedEvent) e);
-            } else if (e instanceof PlanDowngradedEvent) {
-                apply((PlanDowngradedEvent) e);
-            } else if (e instanceof SubscriptionCanceledEvent) {
+        for (SubscriptionEvent e : eventStream) {
+            if (e instanceof TrialStarted) {
+                apply((TrialStarted) e);
+            } else if (e instanceof SubscriptionConverted) {
+                apply((SubscriptionConverted) e);
+            } else if (e instanceof PlanUpgraded) {
+                apply((PlanUpgraded) e);
+            } else if (e instanceof PlanDowngraded) {
+                apply((PlanDowngraded) e);
+            } else if (e instanceof SubscriptionCanceled) {
                 apply();
             }
         }
     }
 
-    private void apply(TrialStartedEvent e) {
+    private void apply(TrialStarted e) {
         this.version = 1L;
         this.state = SubscriptionState.TRIAL;
         this.currentPlan = e.preferredPlan();
@@ -166,19 +174,19 @@ public class SubscriptionAggregate {
         this.state = SubscriptionState.CANCELED;
     }
 
-    private void apply(SubscriptionConvertedEvent e) {
+    private void apply(SubscriptionConverted e) {
         this.version++;
         this.state = SubscriptionState.ACTIVE;
         this.currentPlan = e.newPlan();
     }
 
-    private void apply(PlanUpgradedEvent e) {
+    private void apply(PlanUpgraded e) {
         this.version++;
         this.state = SubscriptionState.ACTIVE;
         this.currentPlan = e.newPlan();
     }
 
-    private void apply(PlanDowngradedEvent e) {
+    private void apply(PlanDowngraded e) {
         this.version++;
         this.state = SubscriptionState.ACTIVE;
         this.currentPlan = e.newPlan();

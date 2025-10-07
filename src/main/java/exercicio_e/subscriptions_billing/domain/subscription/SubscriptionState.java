@@ -5,6 +5,7 @@ package exercicio_e.subscriptions_billing.domain.subscription;
  * @date 25/08/2025
  */
 public enum SubscriptionState {
+
     TRIAL,
     ACTIVE,
     CANCELED

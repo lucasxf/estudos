@@ -3,6 +3,8 @@ package exercicio_e.subscriptions_billing.domain.username;
 import exercicio_e.subscriptions_billing.domain.exception.DomainException;
 import exercicio_e.subscriptions_billing.domain.exception.InvalidUsernameException;
 import exercicio_e.subscriptions_billing.domain.exception.UsernameUnavailableException;
+import exercicio_e.subscriptions_billing.domain.username.command.UsernameCommand;
+import exercicio_e.subscriptions_billing.domain.username.command.UsernameCommand.ReserveUsername;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameClaimed;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameReleased;
@@ -57,22 +59,27 @@ public class UsernameAggregate {
         this.claimedBy = null;
     }
 
-    public UsernameReserved decideReserve() {
+    public UsernameReserved decide(ReserveUsername command) {
         if (this.status == UsernameStatus.RESERVED) {
             throw new UsernameUnavailableException("Username is already reserved.");
         }
         if (this.status == UsernameStatus.TAKEN) {
             throw new UsernameUnavailableException("Username is already taken.");
         }
+        if (!usernameKey.equals(command.usernameKey())) {
+            throw new IllegalArgumentException("Username key does not match.");
+        }
         return new UsernameReserved(usernameKey, Instant.now());
     }
 
-    public UsernameClaimed decideClaim(String usernameKey, String accountId) {
+    public UsernameClaimed decide(UsernameCommand.ClaimUsername command) {
+        final String usernameKey = command.usernameKey();
+        final UUID accountId = command.accountId();
         validateKey(usernameKey);
-        if (accountId == null || accountId.isBlank()) {
-            throw new RuntimeException("Invalid account ID.");
+        if (accountId == null || accountId.toString().isBlank()) {
+            throw new InvalidUsernameException("O ID da conta não pode ser nulo ou vazio.");
         }
-        return new UsernameClaimed(usernameKey, UUID.fromString(accountId), Instant.now());
+        return new UsernameClaimed(usernameKey, accountId, Instant.now());
     }
 
     public UsernameReleased decideRelease(String usernameKey, String commandId, String reason) {

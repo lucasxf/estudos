@@ -10,11 +10,11 @@ import java.util.UUID;
  * @date 18/08/2025
  */
 public sealed interface SubscriptionEvent permits
-        TrialStartedEvent,
-        SubscriptionConvertedEvent,
-        SubscriptionCanceledEvent,
-        PlanUpgradedEvent,
-        PlanDowngradedEvent {
+        TrialStarted,
+        SubscriptionConverted,
+        SubscriptionCanceled,
+        PlanUpgraded,
+        PlanDowngraded {
 
     /**
      * Subscription Aggregate ID.

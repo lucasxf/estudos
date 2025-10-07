@@ -7,6 +7,7 @@ import exercicio_e.subscriptions_billing.infrastructure.repository.AccountReposi
 import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,13 +35,41 @@ public class AccountRepositoryImpl implements AccountRepository {
     }
 
     @Override
-    public List<AccountEvent> append(UUID aggregateId, long expectedVersion, AccountEvent newEvent) {
-        return List.of();
+    public List<StoredEvent> append(
+            UUID aggregateId,
+            long expectedVersion,
+            AccountEvent newEvent,
+            UUID correlationId,
+            UUID causationId) {
+        return append(
+                aggregateId,
+                expectedVersion,
+                List.of(newEvent),
+                correlationId,
+                causationId);
     }
 
     @Override
-    public List<AccountEvent> append(UUID aggregateId, long expectedVersion, List<AccountEvent> newEvents) {
-        return List.of();
+    public List<StoredEvent> append(
+            UUID aggregateId,
+            long expectedVersion,
+            List<AccountEvent> newEvents,
+            UUID correlationId,
+            UUID causationId) {
+        final List<String> types = new ArrayList<>();
+        final List<String> payloads = new ArrayList<>();
+        newEvents.forEach(event -> {
+            types.add(event.getClass().getSimpleName());
+            payloads.add(mapper.toJson(event));
+        });
+        return eventStore.appendRaw(
+                AGGREGATE_TYPE,
+                aggregateId.toString(),
+                expectedVersion,
+                types,
+                payloads,
+                correlationId,
+                causationId);
     }
 
     private List<AccountEvent> fromStoredEvents(List<StoredEvent> storedEvents) {
