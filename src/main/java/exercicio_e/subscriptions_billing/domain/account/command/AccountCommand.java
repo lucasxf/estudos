@@ -17,7 +17,7 @@ public sealed interface AccountCommand {
 
     String username();
 
-    record CreateAccountCommand(
+    record CreateAccount(
             UUID commandId,
             UUID accountId,
             Instant timestamp,
@@ -25,7 +25,7 @@ public sealed interface AccountCommand {
             String usernameKey) implements AccountCommand {
     }
 
-    record DeleteAccountCommand(
+    record DeleteAccount(
             UUID commandId,
             UUID accountId,
             Instant timestamp,

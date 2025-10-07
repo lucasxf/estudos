@@ -2,7 +2,7 @@ package exercicio_e.subscriptions_billing.application.api;
 
 import exercicio_e.subscriptions_billing.application.api.dto.AccountResponse;
 import exercicio_e.subscriptions_billing.application.commands.AccountCommandHandler;
-import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
+import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -44,8 +44,8 @@ public class AccountController {
                 UUID.randomUUID();
     }
 
-    private CreateAccountCommand createAccountCommand(String username, String usernameKey) {
-        return new CreateAccountCommand(UUID.randomUUID(), UUID.randomUUID(), Instant.now(), username, usernameKey);
+    private CreateAccount createAccountCommand(String username, String usernameKey) {
+        return new CreateAccount(UUID.randomUUID(), UUID.randomUUID(), Instant.now(), username, usernameKey);
     }
 
     private String usernameKey(String username) {

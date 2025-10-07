@@ -1,8 +1,6 @@
 package exercicio_e.subscriptions_billing.infrastructure.repository;
 
-import exercicio_e.subscriptions_billing.domain.account.Account;
 import exercicio_e.subscriptions_billing.domain.subscription.event.SubscriptionEvent;
-import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
 
 import java.util.List;

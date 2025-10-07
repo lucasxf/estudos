@@ -1,14 +1,15 @@
 package exercicio_e.subscriptions_billing.domain.account;
 
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
-import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
-import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.DeleteAccountCommand;
+import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
+import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.DeleteAccount;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreated;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountDeleted;
 import exercicio_e.subscriptions_billing.domain.exception.AccountCreationException;
 import exercicio_e.subscriptions_billing.domain.exception.DomainException;
 import exercicio_e.subscriptions_billing.domain.exception.InvalidAccountException;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,13 +18,14 @@ import java.util.UUID;
  * @author Lucas Xavier Ferreira
  * @date 22/09/2025
  */
+
 public class AccountAggregate {
 
     private final UUID id;
     private final List<AccountEvent> history;
-
     private long version = -1L;
-    private AccountStatus state;
+    @Getter
+    private AccountStatus status;
 
     private AccountAggregate(UUID id, List<AccountEvent> history, long lastVersion) {
         if (id == null || history == null) {
@@ -31,7 +33,7 @@ public class AccountAggregate {
         }
         this.id = id;
         this.history = history;
-        this.state = AccountStatus.INACTIVE;
+        this.status = AccountStatus.NEW;
         replay();
     }
 
@@ -41,9 +43,9 @@ public class AccountAggregate {
         return aggregate;
     }
 
-    public AccountCreated decide(CreateAccountCommand command) {
+    public AccountCreated decide(CreateAccount command) {
         validateCommand(command);
-        if (state != AccountStatus.INACTIVE) {
+        if (status != AccountStatus.NEW) {
             throw new AccountCreationException(
                     "Uma conta já com este nome de usuário já foi criada " +
                             "ou está em um estado inválido: " + command.username());
@@ -51,9 +53,9 @@ public class AccountAggregate {
         return new AccountCreated(command.accountId(), command.timestamp(), command.username());
     }
 
-    public AccountDeleted decide(DeleteAccountCommand command) {
+    public AccountDeleted decide(DeleteAccount command) {
         validateCommand(command);
-        if (state == AccountStatus.DELETED) {
+        if (status == AccountStatus.DELETED) {
             throw new IllegalStateException("Account already deleted");
         }
         if (command.username() == null || command.username().isBlank()) {
@@ -64,10 +66,10 @@ public class AccountAggregate {
 
     private void replay() {
         for (AccountEvent event : history) {
-            if (event instanceof AccountCreated) {
-                apply((AccountCreated) event);
-            } else if (event instanceof AccountDeleted) {
-                apply((AccountDeleted) event);
+            switch (event) {
+                case AccountCreated e -> apply(e);
+                case AccountDeleted e -> apply(e);
+                default -> throw new DomainException("Unexpected value: " + event);
             }
         }
     }
@@ -82,11 +84,11 @@ public class AccountAggregate {
     }
 
     private void apply(AccountCreated event) {
-        this.state = AccountStatus.ACTIVE;
+        this.status = AccountStatus.ACTIVE;
     }
 
     private void apply(AccountDeleted event) {
-        this.state = AccountStatus.DELETED;
+        this.status = AccountStatus.DELETED;
     }
 
 }

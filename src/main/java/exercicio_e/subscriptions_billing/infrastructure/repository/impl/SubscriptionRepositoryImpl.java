@@ -1,6 +1,5 @@
 package exercicio_e.subscriptions_billing.infrastructure.repository.impl;
 
-import exercicio_e.subscriptions_billing.domain.account.Account;
 import exercicio_e.subscriptions_billing.domain.subscription.event.SubscriptionEvent;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.EventStore;
 import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;

@@ -2,7 +2,7 @@ package exercicio_e.subscriptions_billing.application.commands;
 
 import exercicio_e.subscriptions_billing.domain.account.AccountAggregate;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
-import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccountCommand;
+import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreated;
 import exercicio_e.subscriptions_billing.domain.subscription.SubscriptionAggregate;
@@ -48,14 +48,14 @@ public class AccountCommandHandler {
     public List<AccountEvent> handle(
             UUID correlationId, AccountCommand command) {
         switch (command) {
-            case CreateAccountCommand cmd -> handleCreateAccountCommand(correlationId, cmd);
-            case AccountCommand.DeleteAccountCommand cmd -> handleDeleteAccountCommand(correlationId, cmd);
+            case CreateAccount cmd -> handleCreateAccountCommand(correlationId, cmd);
+            case AccountCommand.DeleteAccount cmd -> handleDeleteAccountCommand(correlationId, cmd);
         }
         return null;
     }
 
     public List<AccountEvent> handleCreateAccountCommand(
-            UUID correlationId, CreateAccountCommand command) {
+            UUID correlationId, CreateAccount command) {
         final String usernameKey = command.usernameKey();
         final var accountId = command.accountId();
 
@@ -122,7 +122,7 @@ public class AccountCommandHandler {
 
     private void handleDeleteAccountCommand(
             UUID correlationId,
-            AccountCommand.DeleteAccountCommand cmd) {
+            AccountCommand.DeleteAccount cmd) {
 
     }
 

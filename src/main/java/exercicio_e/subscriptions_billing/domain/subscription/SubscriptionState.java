@@ -9,4 +9,5 @@ public enum SubscriptionState {
     TRIAL,
     ACTIVE,
     CANCELED
+
 }
