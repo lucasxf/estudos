@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record SubscriptionCanceled(
         UUID subscriptionId,
+        UUID accountId,
         Instant timestamp,
         Plan canceledPlan) implements SubscriptionEvent {
 

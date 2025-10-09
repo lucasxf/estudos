@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record TrialStarted(
         UUID subscriptionId,
+        UUID accountId,
         Instant timestamp,
         Instant end,
         Plan preferredPlan) implements SubscriptionEvent {

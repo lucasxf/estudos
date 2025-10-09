@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record PlanDowngraded(
         UUID subscriptionId,
+        UUID accountId,
         Instant timestamp,
         Plan oldPlan,
         Plan newPlan) implements SubscriptionEvent {

@@ -9,12 +9,12 @@ import java.util.UUID;
  * @author Lucas Xavier Ferreira
  * @date 18/08/2025
  */
-public sealed interface SubscriptionEvent permits
-        TrialStarted,
-        SubscriptionConverted,
-        SubscriptionCanceled,
-        PlanUpgraded,
-        PlanDowngraded {
+public sealed interface SubscriptionEvent
+        permits TrialStarted,
+                SubscriptionConverted,
+                SubscriptionCanceled,
+                PlanUpgraded,
+                PlanDowngraded {
 
     String TRIAL_STARTED = "TrialStarted";
     String SUBSCRIPTION_CONVERTED = "SubscriptionConverted";
@@ -22,13 +22,14 @@ public sealed interface SubscriptionEvent permits
     String PLAN_UPGRADED = "PlanUpgraded";
     String PLAN_DOWNGRADED = "PlanDowngraded";
 
-
     /**
      * Subscription Aggregate ID.
      *
      * @return this subscription's ID.
      */
     UUID subscriptionId();
+
+    UUID accountId();
 
     Instant timestamp();
 

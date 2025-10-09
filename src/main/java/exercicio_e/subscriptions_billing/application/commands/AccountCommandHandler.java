@@ -72,7 +72,6 @@ public class AccountCommandHandler {
                 correlationId,
                 reserveUsername.commandId());
 
-
         // 2. criar conta
         final var accountCommandId = UUID.randomUUID();
         final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
