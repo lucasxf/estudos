@@ -12,17 +12,14 @@ public interface EventBus {
      * Publishes an event to the event bus.
      *
      * @param event
-     * @param <E>
      */
-    <E> void publish(EventEnvelope<E> event);
+    void publish(EventEnvelope<?> event);
 
     /**
-     * Publishes a collection of events to the event bus.
      *
      * @param events
-     * @param <E>
      */
-    default <E> void publishAll(Collection<EventEnvelope<E>> events) {
+    default void publishAll(Collection<? extends EventEnvelope<?>> events) {
         if (events == null || events.isEmpty()) {
             return;
         }
@@ -36,6 +33,6 @@ public interface EventBus {
      * @param handler
      * @param <E>
      */
-    <E> void subscribe(Class<E> eventType, EventHandler<E> handler);
+    <E> AutoCloseable subscribe(Class<E> eventType, EventHandler<E> handler);
 
 }

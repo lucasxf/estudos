@@ -29,9 +29,6 @@ class AccountAggregateTest {
         assertEquals(command.username(), result.username());
     }
 
-    @Test
-    void
-
     private static AccountCommand.CreateAccount createAccountCommand(
             String username, String usernameKey) {
         return new AccountCommand.CreateAccount(
