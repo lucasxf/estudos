@@ -9,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author lucas
  * @date 11/10/2025 09:56
  */
-public class InMemoryEventBuss implements EventBus {
+public class InMemoryEventBus implements EventBus {
 
     private final Map<Class<?>, List<EventHandler<?>>> handlers = new ConcurrentHashMap<>();
 
