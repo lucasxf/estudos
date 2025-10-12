@@ -1,6 +1,7 @@
 package exercicio_e.subscriptions_billing.infrastructure.messaging;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * @author lucas
@@ -19,7 +20,8 @@ public interface EventBus {
      *
      * @param events
      */
-    default void publishAll(Collection<? extends EventEnvelope<?>> events) {
+    default void publishAll(Collection<? extends EventEnvelope<?>> events,
+                            UUID correlationId, UUID causationId) {
         if (events == null || events.isEmpty()) {
             return;
         }

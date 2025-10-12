@@ -12,10 +12,13 @@ import exercicio_e.subscriptions_billing.domain.subscription.plan.Plan;
 import exercicio_e.subscriptions_billing.domain.username.UsernameAggregate;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameClaimed;
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameReserved;
-import exercicio_e.subscriptions_billing.infrastructure.eventstore.StoredEvent;
+import exercicio_e.subscriptions_billing.infrastructure.context.ContextScope;
+import exercicio_e.subscriptions_billing.infrastructure.messaging.EventBus;
 import exercicio_e.subscriptions_billing.infrastructure.repository.AccountRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
+import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -29,20 +32,25 @@ import static exercicio_e.subscriptions_billing.domain.username.command.Username
  * @author Lucas Xavier Ferreira
  * @date 22/09/2025
  */
+@Slf4j
 @Component
 public class AccountCommandHandler {
 
+    private final EventBus eventBus;
     private final UsernameRepository usernameRepository;
     private final AccountRepository accountRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final EventMapper eventMapper;
 
     public AccountCommandHandler(
-            UsernameRepository usernameRepository,
+            EventBus eventBus, UsernameRepository usernameRepository,
             AccountRepository accountRepository,
-            SubscriptionRepository subscriptionRepository) {
+            SubscriptionRepository subscriptionRepository, EventMapper eventMapper) {
+        this.eventBus = eventBus;
         this.usernameRepository = usernameRepository;
         this.accountRepository = accountRepository;
         this.subscriptionRepository = subscriptionRepository;
+        this.eventMapper = eventMapper;
     }
 
     public List<AccountEvent> handle(
@@ -59,64 +67,79 @@ public class AccountCommandHandler {
         final String usernameKey = command.usernameKey();
         final var accountId = command.accountId();
 
-        // 1. reservar nome de usuário
-        final UsernameRepository.LoadedStream usernameStream = usernameRepository.load(usernameKey);
-        final UsernameAggregate usernameAggregate =
-                UsernameAggregate.from(usernameKey, usernameStream.history(), usernameStream.lastVersion());
-        final ReserveUsername reserveUsername = new ReserveUsername(UUID.randomUUID(), usernameKey);
-        final UsernameReserved usernameReserved = usernameAggregate.decide(reserveUsername);
-        final List<StoredEvent> usernameEvents = usernameRepository.append(
-                usernameKey,
-                usernameStream.lastVersion(),
-                usernameReserved,
-                correlationId,
-                reserveUsername.commandId());
+        try (var scope = ContextScope.open(correlationId, command.commandId())) {
+            log.info("Processing CreateAccount command for username: {}", command.username());
 
-        // 2. criar conta
-        final var accountCommandId = UUID.randomUUID();
-        final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
-        final AccountAggregate accountAggregate =
-                AccountAggregate.from(accountId, accountStream.history(), accountStream.lastVersion());
-        final AccountCreated accountCreated = accountAggregate.decide(command);
-        final List<StoredEvent> accountEvents = accountRepository.append(
-                accountId,
-                accountStream.lastVersion(),
-                accountCreated,
-                correlationId,
-                accountCommandId);
+            // 1. reservar nome de usuário
+            final UsernameRepository.LoadedStream usernameStream = usernameRepository.load(usernameKey);
+            final UsernameAggregate usernameAggregate =
+                    UsernameAggregate.from(usernameKey, usernameStream.history(), usernameStream.lastVersion());
+            final ReserveUsername reserveUsername = new ReserveUsername(UUID.randomUUID(), usernameKey);
+            final UsernameReserved usernameReserved = usernameAggregate.decide(reserveUsername);
+            final var usernameEvents = usernameRepository.append(
+                            usernameKey,
+                            usernameStream.lastVersion(),
+                            usernameReserved,
+                            correlationId,
+                            reserveUsername.commandId())
+                    .stream().map(eventMapper::toEnvelope).toList();
+            eventBus.publishAll(usernameEvents, correlationId, reserveUsername.commandId());
+            log.info("Username '{}' reserved for account '{}'", command.username(), accountId);
 
-        // 3. reivindicar nome de usuário
-        final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
-        UsernameAggregate usernameAggRefresh =
-                UsernameAggregate.from(usernameKey, usernameReload.history(), usernameReload.lastVersion());
-        final ClaimUsername claimUsername = new ClaimUsername(accountCommandId, usernameKey, accountId);
-        final UsernameClaimed usernameClaimed =
-                usernameAggRefresh.decide(claimUsername);
+            // 2. criar conta
+            final var accountCommandId = UUID.randomUUID();
+            final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
+            final AccountAggregate accountAggregate =
+                    AccountAggregate.from(accountId, accountStream.history(), accountStream.lastVersion());
+            final AccountCreated accountCreated = accountAggregate.decide(command);
+            final var accountEvents = accountRepository.append(
+                            accountId,
+                            accountStream.lastVersion(),
+                            accountCreated,
+                            correlationId,
+                            accountCommandId)
+                    .stream().map(eventMapper::toEnvelope).toList();
+            eventBus.publishAll(accountEvents, correlationId, accountCommandId);
+            log.info("Account '{}' created for username '{}'", accountId, command.username());
 
-        final List<StoredEvent> usernameClaimedEvents = usernameRepository.append(
-                usernameKey,
-                usernameReload.lastVersion(),
-                usernameClaimed,
-                correlationId,
-                claimUsername.commandId());
+            // 3. reivindicar nome de usuário
+            final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
+            final UsernameAggregate usernameAggRefresh =
+                    UsernameAggregate.from(usernameKey, usernameReload.history(), usernameReload.lastVersion());
+            final ClaimUsername claimUsername = new ClaimUsername(accountCommandId, usernameKey, accountId);
+            final UsernameClaimed usernameClaimed =
+                    usernameAggRefresh.decide(claimUsername);
+            final var usernameClaimedEvents = usernameRepository.append(
+                            usernameKey,
+                            usernameReload.lastVersion(),
+                            usernameClaimed,
+                            correlationId,
+                            claimUsername.commandId())
+                    .stream().map(eventMapper::toEnvelope).toList();
+            eventBus.publishAll(usernameClaimedEvents, correlationId, claimUsername.commandId());
 
-        // 4. Iniciar o período de teste de assinatura
-        final var subscriptionId = UUID.randomUUID();
-        final var subscriptionStream = subscriptionRepository.load(subscriptionId);
-        final StartTrial startTrial = new StartTrial(UUID.randomUUID(), subscriptionId, Instant.now(), Plan.STANDARD);
-        SubscriptionAggregate subscriptionAggregate = SubscriptionAggregate.from(
-                subscriptionId,
-                subscriptionStream.history(),
-                subscriptionStream.lastVersion());
+            // 4. Iniciar o período de teste de assinatura
+            final var subscriptionId = UUID.randomUUID();
+            final var subscriptionStream = subscriptionRepository.load(subscriptionId);
+            final StartTrial startTrial = new StartTrial(UUID.randomUUID(), subscriptionId, Instant.now(),
+                    Plan.STANDARD);
+            final SubscriptionAggregate subscriptionAggregate = SubscriptionAggregate.from(
+                    subscriptionId,
+                    subscriptionStream.history(),
+                    subscriptionStream.lastVersion());
 
-        final TrialStarted trialStarted = subscriptionAggregate.decide(startTrial);
-        final List<StoredEvent> trialStartedEvents = subscriptionRepository.append(
-                subscriptionId,
-                subscriptionStream.lastVersion(),
-                trialStarted,
-                correlationId,
-                startTrial.commandId());
-        return null;
+            final TrialStarted trialStarted = subscriptionAggregate.decide(startTrial);
+            final var trialStartedEvents = subscriptionRepository.append(
+                            subscriptionId,
+                            subscriptionStream.lastVersion(),
+                            trialStarted,
+                            correlationId,
+                            startTrial.commandId())
+                    .stream().map(eventMapper::toEnvelope).toList();
+            eventBus.publishAll(trialStartedEvents, correlationId, startTrial.commandId());
+            log.info("Trial started for account '{}' with subscription '{}'", accountId, subscriptionId);
+            return null;
+        }
     }
 
     private void handleDeleteAccountCommand(

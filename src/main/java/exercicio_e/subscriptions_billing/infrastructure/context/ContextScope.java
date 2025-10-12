@@ -15,6 +15,7 @@ import java.util.UUID;
  *     scope.log().info("Processing command...");
  * }
  * }</pre>
+ *
  * @author lucas
  * @date 12/10/2025 08:45
  */
