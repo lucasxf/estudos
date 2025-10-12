@@ -12,6 +12,6 @@ public interface EventHandler<E> {
      *
      * @param event
      */
-    void handle(EventEnvelope<E> event);
+    void handle(EventEnvelope<?> event);
 
 }
