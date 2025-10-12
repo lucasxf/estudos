@@ -106,7 +106,7 @@ public class AccountCommandHandler {
             // 4. Iniciar o período de teste de assinatura
             final var subscriptionId = UUID.randomUUID();
             final var subscriptionStream = subscriptionRepository.load(subscriptionId);
-            final StartTrial startTrial = new StartTrial(UUID.randomUUID(), subscriptionId, Instant.now(),
+            final StartTrial startTrial = new StartTrial(UUID.randomUUID(), Instant.now(), subscriptionId,
                     Plan.STANDARD);
             final SubscriptionAggregate subscriptionAggregate = SubscriptionAggregate.from(
                     subscriptionId,

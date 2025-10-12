@@ -58,7 +58,7 @@ public class AccountController {
     }
 
     private CreateAccount createAccountCommand(UUID commandId, String username, String usernameKey) {
-        return new CreateAccount(commandId, UUID.randomUUID(), Instant.now(), username, usernameKey);
+        return new CreateAccount(commandId, Instant.now(), UUID.randomUUID(), username, usernameKey);
     }
 
     private String usernameKey(String username) {

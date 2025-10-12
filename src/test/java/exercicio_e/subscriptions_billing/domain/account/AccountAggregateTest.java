@@ -33,8 +33,7 @@ class AccountAggregateTest {
             String username, String usernameKey) {
         return new AccountCommand.CreateAccount(
                 UUID.randomUUID(),
-                UUID.randomUUID(),
-                Instant.now(),
+                Instant.now(), UUID.randomUUID(),
                 username,
                 usernameKey);
     }
