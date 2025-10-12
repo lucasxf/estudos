@@ -5,6 +5,7 @@ import exercicio_e.subscriptions_billing.infrastructure.messaging.EventBus;
 import exercicio_e.subscriptions_billing.infrastructure.messaging.EventEnvelope;
 import exercicio_e.subscriptions_billing.infrastructure.messaging.EventHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 import java.util.List;
 import java.util.Map;
@@ -21,11 +22,12 @@ public class InMemoryEventBus implements EventBus {
     private final Map<Class<?>, List<EventHandler<?>>> handlers = new ConcurrentHashMap<>();
 
     @Override
-    public void publish(EventEnvelope<?> event) {
-        try (final var scope = ContextScope.open(event.correlationId(), event.causationId())) {
-            final Class<?> clazz = event.event().getClass();
-            var eventHandlers = handlers.getOrDefault(clazz, List.of());
-            final String name = clazz.getSimpleName();
+    public void publish(EventEnvelope<?> eventEnvelope) {
+        try (final var scope = ContextScope.open(eventEnvelope.correlationId(), eventEnvelope.causationId())) {
+            log.debug("[MDC] CorrelationId: {}, CausationId: {}", MDC.get("correlationId"), MDC.get("causationId"));
+            final Class<?> eventType = eventEnvelope.event().getClass();
+            var eventHandlers = handlers.getOrDefault(eventType, List.of());
+            final String name = eventType.getSimpleName();
             if (eventHandlers.isEmpty()) {
                 log.warn("No handlers found for event type: {}", name);
                 return;
@@ -34,7 +36,7 @@ public class InMemoryEventBus implements EventBus {
                     name, eventHandlers.size());
             for (EventHandler<?> handler : eventHandlers) {
                 try {
-                    handler.handle(event);
+                    handler.handle(eventEnvelope);
                 } catch (Exception e) {
                     log.error("Error handling event of type: {}", name, e);
                 }

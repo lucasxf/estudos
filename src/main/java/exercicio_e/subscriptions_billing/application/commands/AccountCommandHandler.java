@@ -1,10 +1,9 @@
 package exercicio_e.subscriptions_billing.application.commands;
 
-import exercicio_e.subscriptions_billing.domain.account.AccountAggregate;
+import exercicio_e.subscriptions_billing.application.commands.handlers.impl.CreateAccountHandler;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
-import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent.AccountCreated;
 import exercicio_e.subscriptions_billing.domain.subscription.SubscriptionAggregate;
 import exercicio_e.subscriptions_billing.domain.subscription.command.SubscriptionCommand.StartTrial;
 import exercicio_e.subscriptions_billing.domain.subscription.event.TrialStarted;
@@ -14,7 +13,6 @@ import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.Use
 import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameReserved;
 import exercicio_e.subscriptions_billing.infrastructure.context.ContextScope;
 import exercicio_e.subscriptions_billing.infrastructure.messaging.EventBus;
-import exercicio_e.subscriptions_billing.infrastructure.repository.AccountRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionRepository;
 import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
 import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
@@ -37,18 +35,17 @@ import static exercicio_e.subscriptions_billing.domain.username.command.Username
 public class AccountCommandHandler {
 
     private final EventBus eventBus;
+    private final CreateAccountHandler createAccountHandler;
     private final UsernameRepository usernameRepository;
-    private final AccountRepository accountRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final EventMapper eventMapper;
 
     public AccountCommandHandler(
-            EventBus eventBus, UsernameRepository usernameRepository,
-            AccountRepository accountRepository,
+            EventBus eventBus, CreateAccountHandler createAccountHandler, UsernameRepository usernameRepository,
             SubscriptionRepository subscriptionRepository, EventMapper eventMapper) {
         this.eventBus = eventBus;
+        this.createAccountHandler = createAccountHandler;
         this.usernameRepository = usernameRepository;
-        this.accountRepository = accountRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.eventMapper = eventMapper;
     }
@@ -87,19 +84,7 @@ public class AccountCommandHandler {
             log.info("Username '{}' reserved for account '{}'", command.username(), accountId);
 
             // 2. criar conta
-            final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
-            final AccountAggregate accountAggregate =
-                    AccountAggregate.from(accountId, accountStream.history(), accountStream.lastVersion());
-            final AccountCreated accountCreated = accountAggregate.decide(command);
-            final var accountEvents = accountRepository.append(
-                            accountId,
-                            accountStream.lastVersion(),
-                            accountCreated,
-                            correlationId,
-                            accountCommandId)
-                    .stream().map(eventMapper::toEnvelope).toList();
-            eventBus.publishAll(accountEvents, correlationId, accountCommandId);
-            log.info("Account '{}' created for username '{}'", accountId, command.username());
+            createAccountHandler.handle(command, correlationId);
 
             // 3. reivindicar nome de usuário
             final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
