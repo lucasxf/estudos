@@ -28,22 +28,9 @@ public class SubscriptionRepositoryImpl extends AbstractEventSourcingRepository<
     }
 
     @Override
-    public List<StoredEvent> append(UUID subscriptionId, long expectedVersion, List<SubscriptionEvent> newEvents, UUID correlationId, UUID causationId) {
+    public List<StoredEvent> append(UUID subscriptionId, long expectedVersion, List<SubscriptionEvent> newEvents,
+                                    UUID correlationId, UUID causationId) {
         return List.of();
-    }
-
-    @Override
-    public List<SubscriptionEvent> getEventsByAccount(Account account) {
-        return SubscriptionRepository.super.getEventsByAccount(account);
-    }
-
-    @Override
-    public List<SubscriptionEvent> getEventsByAccountId(UUID id) {
-        return List.of();
-    }
-
-    private StoredEvent toStoredEvent(UUID subscriptionId, SubscriptionEvent event) {
-        return null;
     }
 
 }

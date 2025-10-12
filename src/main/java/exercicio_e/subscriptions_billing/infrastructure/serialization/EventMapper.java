@@ -55,8 +55,7 @@ public final class EventMapper {
                 event.occurredAt(),
                 domainEvent,
                 event.correlationId(),
-                event.causationId()
-        );
+                event.causationId());
     }
 
     public SerializedBatch serializeBatch(List<?> events) {

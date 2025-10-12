@@ -32,12 +32,6 @@ public interface SubscriptionRepository {
                              UUID correlationId,
                              UUID causationId);
 
-    default List<SubscriptionEvent> getEventsByAccount(Account account) {
-        return getEventsByAccountId(account.getId());
-    }
-
-    List<SubscriptionEvent> getEventsByAccountId(UUID id);
-
     record LoadedStream(UUID aggregateId, List<SubscriptionEvent> history, long lastVersion) {
     }
 
