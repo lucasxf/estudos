@@ -64,10 +64,10 @@ public class AccountCommandHandler {
 
     public List<AccountEvent> handleCreateAccountCommand(
             UUID correlationId, CreateAccount command) {
+        final UUID accountCommandId = command.commandId();
         final String usernameKey = command.usernameKey();
         final var accountId = command.accountId();
-
-        try (var scope = ContextScope.open(correlationId, command.commandId())) {
+        try (var scope = ContextScope.open(correlationId, accountCommandId)) {
             log.info("Processing CreateAccount command for username: {}", command.username());
 
             // 1. reservar nome de usuário
@@ -87,7 +87,6 @@ public class AccountCommandHandler {
             log.info("Username '{}' reserved for account '{}'", command.username(), accountId);
 
             // 2. criar conta
-            final var accountCommandId = UUID.randomUUID();
             final AccountRepository.LoadedStream accountStream = accountRepository.load(accountId);
             final AccountAggregate accountAggregate =
                     AccountAggregate.from(accountId, accountStream.history(), accountStream.lastVersion());
@@ -106,7 +105,8 @@ public class AccountCommandHandler {
             final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
             final UsernameAggregate usernameAggRefresh =
                     UsernameAggregate.from(usernameKey, usernameReload.history(), usernameReload.lastVersion());
-            final ClaimUsername claimUsername = new ClaimUsername(accountCommandId, usernameKey, accountId);
+            final ClaimUsername claimUsername = new ClaimUsername(
+                    UUID.randomUUID(), usernameKey, accountId);
             final UsernameClaimed usernameClaimed =
                     usernameAggRefresh.decide(claimUsername);
             final var usernameClaimedEvents = usernameRepository.append(
