@@ -3,6 +3,7 @@ package exercicio_e.subscriptions_billing.application.api;
 import exercicio_e.subscriptions_billing.application.api.dto.AccountResponse;
 import exercicio_e.subscriptions_billing.application.commands.AccountCommandHandler;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
+import exercicio_e.subscriptions_billing.infrastructure.context.ContextScope;
 import exercicio_e.subscriptions_billing.infrastructure.context.ExecutionContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -39,18 +40,20 @@ public class AccountController {
 
         var correlationId = getCorrelationId(corr);
         var causationId = UUID.randomUUID();
-        var context = ExecutionContext.of(correlationId, causationId);
-        context.applyToMdc();
+        try (var ignored = ContextScope.open(correlationId, causationId)) {
+            var context = ExecutionContext.of(correlationId, causationId);
+            context.applyToMdc();
 
-        log.info("Received request to create account for username: {}", username);
+            log.info("Received request to create account for username: {}", username);
 
-        var command = createAccountCommand(causationId, username, usernameKey(username));
-        commandHandler.handle(correlationId, command);
+            var command = createAccountCommand(causationId, username, usernameKey(username));
+            commandHandler.handle(correlationId, command);
 
-        log.info("Account creation command processed for username: {}", username);
+            log.info("Account creation command processed for username: {}", username);
 
-        context.clearMdc();
-        return ResponseEntity.accepted().build();
+            context.clearMdc();
+            return ResponseEntity.accepted().build();
+        }
     }
 
     private UUID getCorrelationId(String corr) {
