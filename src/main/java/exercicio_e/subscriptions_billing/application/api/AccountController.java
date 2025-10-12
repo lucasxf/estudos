@@ -4,7 +4,6 @@ import exercicio_e.subscriptions_billing.application.api.dto.AccountResponse;
 import exercicio_e.subscriptions_billing.application.commands.AccountCommandHandler;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
 import exercicio_e.subscriptions_billing.infrastructure.context.ContextScope;
-import exercicio_e.subscriptions_billing.infrastructure.context.ExecutionContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,10 +39,7 @@ public class AccountController {
 
         var correlationId = getCorrelationId(corr);
         var causationId = UUID.randomUUID();
-        try (var ignored = ContextScope.open(correlationId, causationId)) {
-            var context = ExecutionContext.of(correlationId, causationId);
-            context.applyToMdc();
-
+        try (var scope = ContextScope.open(correlationId, causationId)) {
             log.info("Received request to create account for username: {}", username);
 
             var command = createAccountCommand(causationId, username, usernameKey(username));
@@ -51,7 +47,6 @@ public class AccountController {
 
             log.info("Account creation command processed for username: {}", username);
 
-            context.clearMdc();
             return ResponseEntity.accepted().build();
         }
     }

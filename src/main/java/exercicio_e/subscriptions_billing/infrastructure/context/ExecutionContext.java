@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public record ExecutionContext(String correlationId, String causationId) {
 
-    public static ExecutionContext of(UUID correlationId, UUID causationId) {
+    public static ExecutionContext from(UUID correlationId, UUID causationId) {
         return new ExecutionContext(correlationId.toString(), causationId.toString());
     }
 
