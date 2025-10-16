@@ -36,12 +36,13 @@ public class CreateAccountHandler implements CommandHandler<CreateAccount> {
         try (final var scope = ContextScope.open(correlationId, command.commandId())) {
             log.info("Handling CreateAccount command for username: {}", command.username());
             var accountId = command.accountId();
-
             final var accountCommandId = command.commandId();
+
             // 1. Load current state
             final var accountStream = accountRepository.load(accountId);
             final var accountAggregate = AccountAggregate.from(
                     accountId, accountStream.history(), accountStream.lastVersion());
+
             // 2. Decide new events
             final AccountEvent.AccountCreated accountCreated = accountAggregate.decide(command);
 

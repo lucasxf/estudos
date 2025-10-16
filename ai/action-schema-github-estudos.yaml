@@ -1,0 +1,127 @@
+openapi: 3.1.0
+info:
+  title: GitHub Repo Reader (Assistente de Estudos)
+  version: 1.1.0
+  description: >
+    Integração otimizada do Assistente de Estudos do Lucas com o repositório
+    público github.com/lucasxf/estudos (branch 'develop'). Permite listar e ler
+    arquivos diretamente da árvore Git, facilitando análise de código e revisão
+    de arquitetura via GitHub REST API.
+
+servers:
+  - url: https://api.github.com
+
+components:
+  securitySchemes:
+    githubAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: PersonalAccessToken
+
+  parameters:
+    refQuery:
+      in: query
+      name: ref
+      required: false
+      schema:
+        type: string
+        default: develop
+        example: develop
+
+paths:
+  /repos/lucasxf/estudos/contents:
+    get:
+      operationId: listRoot
+      summary: Lista o diretório raiz (branch develop)
+      parameters:
+        - $ref: '#/components/parameters/refQuery'
+      responses:
+        "200":
+          description: Lista de arquivos e pastas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type: { type: string }
+                    name: { type: string }
+                    path: { type: string }
+                    sha:  { type: string }
+                    download_url: { type: string, nullable: true }
+
+  /repos/lucasxf/estudos/contents/{path}:
+    get:
+      operationId: getContent
+      summary: Lê um arquivo ou lista um diretório (branch develop)
+      parameters:
+        - in: path
+          name: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/refQuery'
+      responses:
+        "200":
+          description: Arquivo (objeto) ou diretório (array)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                  - type: object
+
+  /repos/lucasxf/estudos/git/trees/develop:
+    get:
+      operationId: getTree
+      summary: Retorna a árvore completa do repositório (branch develop)
+      parameters:
+        - in: query
+          name: recursive
+          schema: { type: integer, enum: [1], default: 1 }
+      responses:
+        "200":
+          description: Árvore Git completa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tree:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path: { type: string }
+                        type: { type: string }
+                        sha:  { type: string }
+
+  /repos/lucasxf/estudos/git/blobs/{sha}:
+    get:
+      operationId: getBlob
+      summary: Retorna o conteúdo de um arquivo via SHA
+      parameters:
+        - in: path
+          name: sha
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Blob em base64
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content: { type: string }
+                  encoding: { type: string }
+
+security:
+  - {}
+  - { githubAuth: [] }
+
+x-notes:
+  - "✔️ Configuração fixa para o repositório lucasxf/estudos, branch develop."
+  - "✔️ Permite ler e listar qualquer arquivo via GitHub REST API."
+  - "✔️ Sem necessidade de inserir owner/repo manualmente."
+  - "✔️ Ideal para GPTs privados com foco em estudos e revisões de código."

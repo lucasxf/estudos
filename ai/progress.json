@@ -1,0 +1,20 @@
+{
+  "user": "Lucas Xavier Ferreira",
+  "current_focus": "CQRS + Event Sourcing + Process Manager",
+  "roadmap_quarter": "Q4 2025",
+  "last_snapshot": "snapshot-consolidado-2025-10-11.md",
+  "sessions_logged": 1,
+  "topics_mastered": [
+    "DDD fundamentals",
+    "CQRS command side",
+    "Aggregate reconstitution",
+    "Event sourcing core model"
+  ],
+  "topics_in_progress": [
+    "Process Managers (Sagas)",
+    "Event Bus integration",
+    "Event consistency and replay"
+  ],
+  "next_focus": "Observabilidade e Event Choreography",
+  "updated_at": "2025-10-16T18:00:00Z"
+}
