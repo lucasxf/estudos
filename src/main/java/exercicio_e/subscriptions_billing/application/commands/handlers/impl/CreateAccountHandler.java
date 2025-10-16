@@ -21,12 +21,12 @@ import java.util.UUID;
 @Component
 public class CreateAccountHandler implements CommandHandler<CreateAccount> {
 
-    private final AccountRepository accountRepository;
+    private final AccountRepository repository;
     private final EventBus eventBus;
     private final EventMapper eventMapper;
 
-    public CreateAccountHandler(AccountRepository accountRepository, EventBus eventBus, EventMapper eventMapper) {
-        this.accountRepository = accountRepository;
+    public CreateAccountHandler(AccountRepository repository, EventBus eventBus, EventMapper eventMapper) {
+        this.repository = repository;
         this.eventBus = eventBus;
         this.eventMapper = eventMapper;
     }
@@ -39,7 +39,7 @@ public class CreateAccountHandler implements CommandHandler<CreateAccount> {
             final var accountCommandId = command.commandId();
 
             // 1. Load current state
-            final var accountStream = accountRepository.load(accountId);
+            final var accountStream = repository.load(accountId);
             final var accountAggregate = AccountAggregate.from(
                     accountId, accountStream.history(), accountStream.lastVersion());
 
@@ -47,7 +47,7 @@ public class CreateAccountHandler implements CommandHandler<CreateAccount> {
             final AccountEvent.AccountCreated accountCreated = accountAggregate.decide(command);
 
             // 3. Persist new events
-            final var accountEvents = accountRepository.append(
+            final var accountEvents = repository.append(
                             accountId,
                             accountStream.lastVersion(),
                             accountCreated,

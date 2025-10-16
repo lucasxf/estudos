@@ -1,21 +1,16 @@
 package exercicio_e.subscriptions_billing.application.commands;
 
+import exercicio_e.subscriptions_billing.application.commands.handlers.impl.ClaimUsernameHandler;
 import exercicio_e.subscriptions_billing.application.commands.handlers.impl.CreateAccountHandler;
+import exercicio_e.subscriptions_billing.application.commands.handlers.impl.ReserveUsernameHandler;
+import exercicio_e.subscriptions_billing.application.commands.handlers.impl.StartTrialHandler;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand;
 import exercicio_e.subscriptions_billing.domain.account.command.AccountCommand.CreateAccount;
 import exercicio_e.subscriptions_billing.domain.account.event.AccountEvent;
-import exercicio_e.subscriptions_billing.domain.subscription.SubscriptionAggregate;
 import exercicio_e.subscriptions_billing.domain.subscription.command.SubscriptionCommand.StartTrial;
-import exercicio_e.subscriptions_billing.domain.subscription.event.TrialStarted;
 import exercicio_e.subscriptions_billing.domain.subscription.plan.Plan;
-import exercicio_e.subscriptions_billing.domain.username.UsernameAggregate;
-import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameClaimed;
-import exercicio_e.subscriptions_billing.domain.username.event.UsernameEvent.UsernameReserved;
+import exercicio_e.subscriptions_billing.domain.username.command.UsernameCommand.ReserveUsername;
 import exercicio_e.subscriptions_billing.infrastructure.context.ContextScope;
-import exercicio_e.subscriptions_billing.infrastructure.messaging.EventBus;
-import exercicio_e.subscriptions_billing.infrastructure.repository.SubscriptionRepository;
-import exercicio_e.subscriptions_billing.infrastructure.repository.UsernameRepository;
-import exercicio_e.subscriptions_billing.infrastructure.serialization.EventMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +19,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static exercicio_e.subscriptions_billing.domain.username.command.UsernameCommand.ClaimUsername;
-import static exercicio_e.subscriptions_billing.domain.username.command.UsernameCommand.ReserveUsername;
 
 /**
  * @author Lucas Xavier Ferreira
@@ -34,20 +28,20 @@ import static exercicio_e.subscriptions_billing.domain.username.command.Username
 @Component
 public class AccountCommandHandler {
 
-    private final EventBus eventBus;
     private final CreateAccountHandler createAccountHandler;
-    private final UsernameRepository usernameRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final EventMapper eventMapper;
+    private final ReserveUsernameHandler reserveUsernameHandler;
+    private final ClaimUsernameHandler claimUsernameHandler;
+    private final StartTrialHandler startTrialHandler;
 
     public AccountCommandHandler(
-            EventBus eventBus, CreateAccountHandler createAccountHandler, UsernameRepository usernameRepository,
-            SubscriptionRepository subscriptionRepository, EventMapper eventMapper) {
-        this.eventBus = eventBus;
+            CreateAccountHandler createAccountHandler,
+            ReserveUsernameHandler reserveUsernameHandler,
+            ClaimUsernameHandler claimUsernameHandler,
+            StartTrialHandler startTrialHandler) {
         this.createAccountHandler = createAccountHandler;
-        this.usernameRepository = usernameRepository;
-        this.subscriptionRepository = subscriptionRepository;
-        this.eventMapper = eventMapper;
+        this.reserveUsernameHandler = reserveUsernameHandler;
+        this.claimUsernameHandler = claimUsernameHandler;
+        this.startTrialHandler = startTrialHandler;
     }
 
     public List<AccountEvent> handle(
@@ -68,61 +62,24 @@ public class AccountCommandHandler {
             log.info("Processing CreateAccount command for username: {}", command.username());
 
             // 1. reservar nome de usuário
-            final UsernameRepository.LoadedStream usernameStream = usernameRepository.load(usernameKey);
-            final UsernameAggregate usernameAggregate =
-                    UsernameAggregate.from(usernameKey, usernameStream.history(), usernameStream.lastVersion());
-            final ReserveUsername reserveUsername = new ReserveUsername(UUID.randomUUID(), usernameKey);
-            final UsernameReserved usernameReserved = usernameAggregate.decide(reserveUsername);
-            final var usernameEvents = usernameRepository.append(
-                            usernameKey,
-                            usernameStream.lastVersion(),
-                            usernameReserved,
-                            correlationId,
-                            reserveUsername.commandId())
-                    .stream().map(eventMapper::toEnvelope).toList();
-            eventBus.publishAll(usernameEvents, correlationId, reserveUsername.commandId());
-            log.info("Username '{}' reserved for account '{}'", command.username(), accountId);
+            final var reserveUsername = new ReserveUsername(
+                    UUID.randomUUID(), Instant.now(), usernameKey);
+            reserveUsernameHandler.handle(reserveUsername, correlationId);
 
             // 2. criar conta
             createAccountHandler.handle(command, correlationId);
 
             // 3. reivindicar nome de usuário
-            final UsernameRepository.LoadedStream usernameReload = usernameRepository.load(usernameKey);
-            final UsernameAggregate usernameAggRefresh =
-                    UsernameAggregate.from(usernameKey, usernameReload.history(), usernameReload.lastVersion());
-            final ClaimUsername claimUsername = new ClaimUsername(
-                    UUID.randomUUID(), usernameKey, accountId);
-            final UsernameClaimed usernameClaimed =
-                    usernameAggRefresh.decide(claimUsername);
-            final var usernameClaimedEvents = usernameRepository.append(
-                            usernameKey,
-                            usernameReload.lastVersion(),
-                            usernameClaimed,
-                            correlationId,
-                            claimUsername.commandId())
-                    .stream().map(eventMapper::toEnvelope).toList();
-            eventBus.publishAll(usernameClaimedEvents, correlationId, claimUsername.commandId());
+            final var claimUsername = new ClaimUsername(
+                    UUID.randomUUID(), Instant.now(), usernameKey, accountId);
+            claimUsernameHandler.handle(claimUsername, correlationId);
 
             // 4. Iniciar o período de teste de assinatura
-            final var subscriptionId = UUID.randomUUID();
-            final var subscriptionStream = subscriptionRepository.load(subscriptionId);
-            final StartTrial startTrial = new StartTrial(UUID.randomUUID(), Instant.now(), subscriptionId,
-                    Plan.STANDARD);
-            final SubscriptionAggregate subscriptionAggregate = SubscriptionAggregate.from(
-                    subscriptionId,
-                    subscriptionStream.history(),
-                    subscriptionStream.lastVersion());
-
-            final TrialStarted trialStarted = subscriptionAggregate.decide(startTrial);
-            final var trialStartedEvents = subscriptionRepository.append(
-                            subscriptionId,
-                            subscriptionStream.lastVersion(),
-                            trialStarted,
-                            correlationId,
-                            startTrial.commandId())
-                    .stream().map(eventMapper::toEnvelope).toList();
-            eventBus.publishAll(trialStartedEvents, correlationId, startTrial.commandId());
-            log.info("Trial started for account '{}' with subscription '{}'", accountId, subscriptionId);
+            log.info("Handling StartTrial command for account: {}", command.accountId());
+            final var startTrial = new StartTrial(
+                    UUID.randomUUID(), Instant.now(), UUID.randomUUID(), Plan.STANDARD);
+            startTrialHandler.handle(startTrial, correlationId);
+            log.info("Trial started for account '{}' with subscription '{}'", accountId, startTrial.subscriptionId());
             return null;
         }
     }
